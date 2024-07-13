@@ -8,7 +8,7 @@ const rmeStore = useRmeStore();
   <div>
     <h2>Audio Controls</h2>
     <div v-if="rmeStore.isInitialized">
-      <div v-for="control in rmeStore.controls" :key="control.name">
+      <div v-for="control in rmeStore.alsaControls" :key="control.name">
         <h3>{{ control.name }}</h3>
         <p>Capabilities: {{ control.capabilities.join(", ") }}</p>
         <p>Channels: {{ control.channels }}</p>

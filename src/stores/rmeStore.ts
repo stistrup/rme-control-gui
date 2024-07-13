@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
 
 export const useRmeStore = defineStore("rme", () => {
-  const controls = ref<AudioControls>({});
+  const alsaControls = ref<AudioControls>({});
   const headphoneVolume = ref(0);
   const monitorVolume = ref(0);
   const soundCardNumber = ref<number | null>(null);
@@ -16,17 +16,17 @@ export const useRmeStore = defineStore("rme", () => {
   };
 
   const setControls = (newControls: AudioControls) => {
-    controls.value = newControls;
+    alsaControls.value = newControls;
   };
 
   function updateControl(controlName: string, updatedControl: AudioControl) {
-    if (controls.value[controlName]) {
-      controls.value[controlName] = updatedControl;
+    if (alsaControls.value[controlName]) {
+      alsaControls.value[controlName] = updatedControl;
     }
   }
 
   return {
-    controls,
+    alsaControls,
     isInitialized,
     monitorVolume,
     headphoneVolume,

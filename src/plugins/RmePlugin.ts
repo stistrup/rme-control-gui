@@ -34,7 +34,7 @@ export class RmePlugin {
   }
 
   getControl(name: string) {
-    return this.store.controls[name];
+    return this.store.alsaControls[name];
   }
 
   async setVolume(controlName: string, volume: number) {
