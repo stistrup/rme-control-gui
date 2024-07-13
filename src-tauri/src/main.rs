@@ -4,11 +4,12 @@
 mod audio_control;
 
 use tauri::Manager;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use std::collections::HashMap;
 
 #[tauri::command]
-fn initialize_sound_card(sound_card_name: String) -> Result<u32, String> {
-    audio_control::initialize_sound_card(&sound_card_name)
+fn find_sound_card_number(sound_card_name: String) -> Result<u32, String> {
+    audio_control::find_sound_card_number(&sound_card_name)
 }
 
 #[tauri::command]
@@ -36,6 +37,11 @@ fn get_initial_states() -> Result<InitialStates, String> {
     })
 }
 
+#[tauri::command]
+fn get_soundcard_controls(card_name: String) -> Result<HashMap<String, Vec<String>>, String> {
+    audio_control::get_soundcard_controls(&card_name)
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -49,10 +55,11 @@ fn main() {
             Ok(())
           })
         .invoke_handler(tauri::generate_handler![
-            initialize_sound_card,
+            find_sound_card_number,
             change_buffer_size,
             set_volume,
             get_initial_states,
+            get_soundcard_controls
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

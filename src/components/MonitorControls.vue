@@ -6,7 +6,7 @@ import {
   setHeadphonesVolume,
   setMonitorVolume,
 } from "../utils/rmeUtils";
-import { useRmeStore } from "../store/babyfaceStore";
+import { useRmeStore } from "../stores/rmeStore";
 
 const rmeStore = useRmeStore();
 

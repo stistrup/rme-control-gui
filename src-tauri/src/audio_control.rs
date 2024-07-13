@@ -5,22 +5,80 @@ use regex::Regex;
 
 static SOUND_CARD_NUMBER: Lazy<Mutex<Option<u32>>> = Lazy::new(|| Mutex::new(None));
 
-pub fn initialize_sound_card(sound_card_name: &str) -> Result<u32, String> {
-    match find_sound_card_number(sound_card_name) {
-        Ok(card_number) => {
-            let mut sound_card = SOUND_CARD_NUMBER.lock().unwrap();
-            *sound_card = Some(card_number);
-            println!("Successfully initialized sound card: {}", card_number);
-            Ok(card_number)
-        },
-        Err(e) => {
-            println!("Failed to initialize sound card: {}", e);
-            Err(e)
+use std::collections::HashMap;
+
+pub fn find_card_index(card_name: &str) -> Result<String, String> {
+    let output = Command::new("aplay")
+        .arg("-l")
+        .output()
+        .map_err(|e| format!("Failed to execute aplay: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    
+    for line in stdout.lines() {
+        if line.contains(card_name) {
+            if let Some(card_index) = line.split_whitespace().nth(1) {
+                return Ok(card_index.trim_end_matches(':').to_string());
+            }
         }
     }
+
+    Err(format!("Could not find card with name: {}", card_name))
 }
 
-fn find_sound_card_number(sound_card_name: &str) -> Result<u32, String> {
+pub fn get_soundcard_controls(card_name: &str) -> Result<HashMap<String, Vec<String>>, String> {
+    let card_index = find_card_index(card_name)?;
+    println!("Found card index {} for {}", card_index, card_name);
+
+    let output = Command::new("amixer")
+        .args(&["-c", &card_index])
+        .output()
+        .map_err(|e| format!("Failed to execute amixer: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut controls = HashMap::new();
+    let mut current_control: Option<String> = None;
+    let mut current_info: Vec<String> = Vec::new();
+
+    for line in stdout.lines() {
+        if line.starts_with("Simple mixer control") {
+            // If we were processing a control, save it before starting a new one
+            if let Some(name) = current_control.take() {
+                controls.insert(name, current_info);
+                current_info = Vec::new();
+            }
+
+            let parts: Vec<&str> = line.split('\'').collect();
+            if parts.len() >= 2 {
+                current_control = Some(parts[1].to_string());
+                current_info.push(line.to_string());
+            }
+        } else if !line.trim().is_empty() {
+            // Add non-empty lines to the current control's info
+            if current_control.is_some() {
+                current_info.push(line.to_string());
+            }
+        }
+    }
+
+    // Don't forget to add the last control
+    if let Some(name) = current_control {
+        controls.insert(name, current_info);
+    }
+
+    // Print the controls
+    println!("Controls:");
+    for (name, info) in &controls {
+        println!("  {}: ", name);
+        for line in info {
+            println!("    {}", line);
+        }
+    }
+
+    Ok(controls)
+}
+
+pub fn find_sound_card_number(sound_card_name: &str) -> Result<u32, String> {
     println!("Searching for sound card: {}", sound_card_name);
     let output = Command::new("aplay")
         .arg("-l")
@@ -31,7 +89,6 @@ fn find_sound_card_number(sound_card_name: &str) -> Result<u32, String> {
         })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    println!("aplay output:\n{}", stdout);
 
     for line in stdout.lines() {
         if line.contains(sound_card_name) {
@@ -39,13 +96,16 @@ fn find_sound_card_number(sound_card_name: &str) -> Result<u32, String> {
                 .nth(1)
                 .and_then(|s| s.trim_start_matches("card").trim_end_matches(':').parse().ok())
             {
-                println!("Found sound card number: {}", card_num);
+                println!("Found sound card: {}", line);
+                let mut sound_card = SOUND_CARD_NUMBER.lock().unwrap();
+                *sound_card = Some(card_num);
                 return Ok(card_num);
             }
         }
     }
 
     println!("Sound card '{}' not found in aplay output", sound_card_name);
+    println!("aplay output:\n{}", stdout);
     Err(format!("Sound card '{}' not found", sound_card_name))
 }
 
@@ -112,3 +172,32 @@ pub fn get_initial_states() -> Result<(i32, i32), String> {
     let monitors_volume = get_volume("PCM-AN1-AN1")?;
     Ok((headphones_volume, monitors_volume))
 }
+
+// pub fn set_channel_volume(card_name: &str, channel: &str, volume: i64) -> Result<(), String> {
+//     let mixer = Mixer::new(&card_name, false).map_err(|e| e.to_string())?;
+//     let selem = mixer.find_selem(&mixer::SelemId::new(channel, 0)).ok_or("Channel not found")?;
+
+//     if !selem.has_volume() {
+//         return Err("Channel does not have volume control".to_string());
+//     }
+
+//     let (min, max) = selem.get_volume_range().map_err(|e| e.to_string())?;
+//     let scaled_volume = min + (max - min) * volume / 100;
+
+//     selem.set_volume_all(scaled_volume).map_err(|e| e.to_string())?;
+//     Ok(())
+// }
+
+// pub fn get_channel_volume(card_name: &str, channel: &str) -> Result<i64, String> {
+//     let mixer = Mixer::new(&card_name, false).map_err(|e| e.to_string())?;
+//     let selem = mixer.find_selem(&mixer::SelemId::new(channel, 0)).ok_or("Channel not found")?;
+
+//     if !selem.has_volume() {
+//         return Err("Channel does not have volume control".to_string());
+//     }
+
+//     let (min, max) = selem.get_volume_range().map_err(|e| e.to_string())?;
+//     let volume = selem.get_volume(mixer::SelemChannelId::FrontLeft).map_err(|e| e.to_string())?;
+
+//     Ok((volume - min) * 100 / (max - min))
+// }

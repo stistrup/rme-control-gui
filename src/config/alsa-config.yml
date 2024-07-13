@@ -1,0 +1,27 @@
+alsa:
+  destinations:
+    headphones:
+      left: "PH3"
+      right: "PH3"
+    monitors:
+      left: "AN1"
+      right: "AN2"
+  sources:
+    mics:
+      mic1:
+        channel: "Mic-AN1"
+        controls:
+          phantom_power: "Mic-AN1 48V"
+      mic2:
+        channel: "Mic-AN2"
+        controls:
+          phantom_power: "Mic-AN2-48V"
+    lines:
+      line1:
+        channel: "Line-IN3"
+        controls:
+          sensitivity: "Line-IN3 Sens."
+      line2:
+        channel: "Line-IN4"
+        controls:
+          sensitivity: "Line-IN4 Sens."

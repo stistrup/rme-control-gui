@@ -1,13 +1,26 @@
 import { invoke } from "@tauri-apps/api/core";
 
-export const initializeSoundCard = async (soundCardName: string) => {
+export const findSoundCardNumber = async (soundCardName: string) => {
   try {
-    const cardNumber = await invoke("initialize_sound_card", { soundCardName });
-    console.log("Sound card initialized:", cardNumber);
+    const cardNumber = await invoke("find_sound_card_number", {
+      soundCardName,
+    });
+
+    console.log(typeof cardNumber);
     return cardNumber as number;
   } catch (error) {
     console.error("Failed to initialize sound card:", error);
     return null;
+  }
+};
+
+export const getSoundcardControls = async (cardName: string) => {
+  try {
+    const controls = await invoke("get_soundcard_controls", { cardName });
+    console.log("Got sound card controls");
+    return controls as Record<string, string[]>;
+  } catch (error) {
+    console.error("Failed to get soundcard controls:", error);
   }
 };
 
