@@ -30,6 +30,7 @@ export const useRmeStore = defineStore("rme", () => {
     isInitialized,
     monitorVolume,
     headphoneVolume,
+    soundCardNumber,
     setSoundcardNumber,
     setControls,
     updateControl,

@@ -3,9 +3,9 @@
 
 mod audio_control;
 
-use tauri::Manager;
 use serde::Serialize;
 use std::collections::HashMap;
+use tauri::Manager;
 
 #[tauri::command]
 fn find_sound_card_number(sound_card_name: String) -> Result<u32, String> {
@@ -41,7 +41,6 @@ fn get_initial_states() -> Result<InitialStates, String> {
 fn get_soundcard_controls(card_name: String) -> Result<HashMap<String, Vec<String>>, String> {
     audio_control::get_soundcard_controls(&card_name)
 }
-
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())

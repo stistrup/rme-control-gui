@@ -1,7 +1,7 @@
-use std::process::Command;
-use std::sync::Mutex;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::process::Command;
+use std::sync::Mutex;
 
 static SOUND_CARD_NUMBER: Lazy<Mutex<Option<u32>>> = Lazy::new(|| Mutex::new(None));
 
@@ -14,7 +14,7 @@ pub fn find_card_index(card_name: &str) -> Result<String, String> {
         .map_err(|e| format!("Failed to execute aplay: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    
+
     for line in stdout.lines() {
         if line.contains(card_name) {
             if let Some(card_index) = line.split_whitespace().nth(1) {
@@ -80,22 +80,21 @@ pub fn get_soundcard_controls(card_name: &str) -> Result<HashMap<String, Vec<Str
 
 pub fn find_sound_card_number(sound_card_name: &str) -> Result<u32, String> {
     println!("Searching for sound card: {}", sound_card_name);
-    let output = Command::new("aplay")
-        .arg("-l")
-        .output()
-        .map_err(|e| {
-            println!("Failed to execute aplay: {}", e);
-            e.to_string()
-        })?;
+    let output = Command::new("aplay").arg("-l").output().map_err(|e| {
+        println!("Failed to execute aplay: {}", e);
+        e.to_string()
+    })?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     for line in stdout.lines() {
         if line.contains(sound_card_name) {
-            if let Some(card_num) = line.split_whitespace()
-                .nth(1)
-                .and_then(|s| s.trim_start_matches("card").trim_end_matches(':').parse().ok())
-            {
+            if let Some(card_num) = line.split_whitespace().nth(1).and_then(|s| {
+                s.trim_start_matches("card")
+                    .trim_end_matches(':')
+                    .parse()
+                    .ok()
+            }) {
                 println!("Found sound card: {}", line);
                 let mut sound_card = SOUND_CARD_NUMBER.lock().unwrap();
                 *sound_card = Some(card_num);
@@ -110,14 +109,22 @@ pub fn find_sound_card_number(sound_card_name: &str) -> Result<u32, String> {
 }
 
 pub fn set_volume(control_name: &str, volume: i32) -> Result<(), String> {
-    let sound_card_number = SOUND_CARD_NUMBER.lock().unwrap()
+    let sound_card_number = SOUND_CARD_NUMBER
+        .lock()
+        .unwrap()
         .ok_or("Sound card number not initialized")?;
-    
+
     // Clamp volume between 0 and 100
     let clamped_volume = volume.clamp(0, 100);
-    
+
     let output = Command::new("amixer")
-        .args(&["-c", &sound_card_number.to_string(), "set", control_name, &format!("{}%", clamped_volume)])
+        .args(&[
+            "-c",
+            &sound_card_number.to_string(),
+            "set",
+            control_name,
+            &format!("{}%", clamped_volume),
+        ])
         .output()
         .map_err(|e| e.to_string())?;
 
@@ -130,7 +137,13 @@ pub fn set_volume(control_name: &str, volume: i32) -> Result<(), String> {
 
 pub fn change_buffer_size(value: u32) -> Result<(), String> {
     let output = Command::new("pw-metadata")
-        .args(&["-n", "settings", "0", "clock.force-quantum", &value.to_string()])
+        .args(&[
+            "-n",
+            "settings",
+            "0",
+            "clock.force-quantum",
+            &value.to_string(),
+        ])
         .output()
         .map_err(|e| e.to_string())?;
 
@@ -142,7 +155,9 @@ pub fn change_buffer_size(value: u32) -> Result<(), String> {
 }
 
 pub fn get_volume(control_name: &str) -> Result<i32, String> {
-    let sound_card_number = SOUND_CARD_NUMBER.lock().unwrap()
+    let sound_card_number = SOUND_CARD_NUMBER
+        .lock()
+        .unwrap()
         .ok_or("Sound card number not initialized")?;
 
     let output = Command::new("amixer")
