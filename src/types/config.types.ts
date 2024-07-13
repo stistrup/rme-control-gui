@@ -18,3 +18,8 @@ export interface AlsaConfig {
   inputs: Input[];
   playback: StereoOutput[];
 }
+
+export interface PipewireConfig {
+  defaultProfile: string;
+  proAudioProfile: string;
+}

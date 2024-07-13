@@ -1,4 +1,4 @@
-import { AlsaConfig } from "../types/alsaConfig.types";
+import { AlsaConfig } from "../types/config.types";
 
 export const alsaConfig: AlsaConfig = {
   outputs: [

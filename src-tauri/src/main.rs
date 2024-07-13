@@ -3,6 +3,7 @@
 
 mod alsa_control;
 mod pipewire_control;
+mod pipewire_profile;
 
 use serde::Serialize;
 use std::collections::HashMap;
@@ -51,6 +52,24 @@ fn get_pipewire_gain() -> Result<f32, String> {
 fn set_pipewire_gain(gain: f32) -> Result<(), String> {
     pipewire_control::set_gain("capture_AUX0", gain)
 }
+
+#[tauri::command]
+fn get_pipewire_active_profile(card_name: String) -> Result<String, String> {
+    let card_id = pipewire_profile::get_card_id(&card_name)?;
+    pipewire_profile::get_active_profile(&card_id)
+}
+
+#[tauri::command]
+fn set_pipewire_profile(card_name: String, profile: String) -> Result<(), String> {
+    let card_id = pipewire_profile::get_card_id(&card_name)?;
+    pipewire_profile::set_profile(&card_id, &profile)
+}
+
+#[tauri::command]
+fn get_pipewire_profiles(card_name: String) -> Result<Vec<String>, String> {
+    let card_id = pipewire_profile::get_card_id(&card_name)?;
+    pipewire_profile::get_profiles(&card_id)
+}
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -70,7 +89,10 @@ fn main() {
             get_initial_states,
             get_soundcard_controls,
             get_pipewire_gain,
-            set_pipewire_gain
+            get_pipewire_active_profile,
+            get_pipewire_profiles,
+            set_pipewire_gain,
+            set_pipewire_profile,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

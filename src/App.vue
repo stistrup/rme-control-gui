@@ -12,7 +12,6 @@ if (!rmePlugin) {
 
 const initApp = async () => {
   await rmePlugin.init();
-  rmePlugin.getGain();
 };
 
 onMounted(async () => {

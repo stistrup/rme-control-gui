@@ -1,5 +1,12 @@
 use std::process::Command;
+use std::sync::Mutex;
 use regex::Regex;
+use lazy_static::lazy_static;
+use std::collections::HashMap;
+
+lazy_static! {
+    static ref NODE_ID_CACHE: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+}
 
 pub fn find_pipewire_node_id(target_port_name: &str) -> Result<String, String> {
     let output = Command::new("pw-cli")
@@ -15,13 +22,11 @@ pub fn find_pipewire_node_id(target_port_name: &str) -> Result<String, String> {
 
     for line in stdout.lines() {
         if line.trim().starts_with("id: ") {
-            // Check if we have found the desired entry
             if let (Some(node_id), Some(port_name)) = (&current_node_id, &current_port_name) {
                 if port_name == target_port_name {
                     return Ok(node_id.clone());
                 }
             }
-            // New entry starts, reset current values
             current_id = Some(line.split_whitespace().nth(1).unwrap_or("").to_string());
             current_node_id = None;
             current_port_name = None;
@@ -36,7 +41,6 @@ pub fn find_pipewire_node_id(target_port_name: &str) -> Result<String, String> {
         }
     }
 
-    // Check the last entry
     if let (Some(node_id), Some(port_name)) = (&current_node_id, &current_port_name) {
         if port_name == target_port_name {
             return Ok(node_id.clone());
@@ -44,6 +48,23 @@ pub fn find_pipewire_node_id(target_port_name: &str) -> Result<String, String> {
     }
 
     Err(format!("Could not find node with port name: {}", target_port_name))
+}
+
+fn get_cached_node_id(target_port_name: &str) -> Result<String, String> {
+    let mut cache = NODE_ID_CACHE.lock().unwrap();
+    if let Some(node_id) = cache.get(target_port_name) {
+        return Ok(node_id.clone());
+    }
+    let node_id = find_pipewire_node_id(target_port_name)?;
+    cache.insert(target_port_name.to_string(), node_id.clone());
+    Ok(node_id)
+}
+
+pub fn update_node_id_cache(target_port_name: &str) -> Result<(), String> {
+    let node_id = find_pipewire_node_id(target_port_name)?;
+    let mut cache = NODE_ID_CACHE.lock().unwrap();
+    cache.insert(target_port_name.to_string(), node_id);
+    Ok(())
 }
 
 pub fn set_input_gain(node_id: &str, gain: f32) -> Result<(), String> {
@@ -60,6 +81,7 @@ pub fn set_input_gain(node_id: &str, gain: f32) -> Result<(), String> {
         Err(stderr.to_string())
     }
 }
+
 pub fn get_input_gain(node_id: &str) -> Result<f32, String> {
     let output = Command::new("pw-cli")
         .args(&["enum-params", node_id, "2"])
@@ -76,27 +98,25 @@ pub fn get_input_gain(node_id: &str) -> Result<f32, String> {
     }
 }
 
-
 fn parse_volume_from_pw_cli_output(output: &str) -> Result<f32, String> {
-    // Adjust the regex pattern based on the actual output format
     let re = Regex::new(r"Prop:\s+key\s+Spa:Pod:Object:Param:Props:volume\s+\(\d+\),\s+flags\s+\d+\s+Float\s+([0-9.]+)").unwrap();
     if let Some(caps) = re.captures(output) {
         caps[1].parse::<f32>().map_err(|e| e.to_string())
     } else {
-        println!("Could not parse volume from pw-cli output: {}", output);  // Print the output for debugging
+        println!("Could not parse volume from pw-cli output: {}", output);
         Err("Could not parse volume from pw-cli output".to_string())
     }
 }
 
 pub fn get_gain(target_port_name: &str) -> Result<f32, String> {
-    let node_id = find_pipewire_node_id(target_port_name)?;
+    let node_id = get_cached_node_id(target_port_name)?;
     let gain = get_input_gain(&node_id)?;
     Ok(gain)
 }
 
 pub fn set_gain(target_port_name: &str, gain: f32) -> Result<(), String> {
     let clamped_gain = gain.clamp(0.0, 1.0);
-    let node_id = find_pipewire_node_id(target_port_name)?;
+    let node_id = get_cached_node_id(target_port_name)?;
     set_input_gain(&node_id, clamped_gain)?;
     Ok(())
 }

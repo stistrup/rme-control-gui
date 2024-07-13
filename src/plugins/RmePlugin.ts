@@ -4,74 +4,134 @@ import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
 import { invoke } from "@tauri-apps/api/core";
 import { RmeInput, RmeOutput, InitialStates } from "../types/rmePlugin.types";
-import { AlsaConfig } from "../types/alsaConfig.types";
+import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
+import { preferedProfiles } from "../config/pipewireConfig";
 
 export class RmePlugin {
   private store: ReturnType<typeof useRmeStore>;
   private config: AlsaConfig = alsaConfig;
-  private name = "Babyface Pro";
+  private alsaName = "Babyface Pro";
+  private pipewireName = "RME_Babyface_Pro";
 
   constructor() {
     this.store = useRmeStore();
   }
 
-  async init() {
+  public init = async () => {
     try {
       const rawControls = (await invoke("get_soundcard_controls", {
-        cardName: this.name,
+        cardName: this.alsaName,
       })) as Record<string, string[]>;
       const formattedControls = formatControls(rawControls);
-      const soundCardNumber = await this.findSoundCardNumber(this.name);
-
       this.store.setControls(formattedControls);
+
+      const soundCardNumber = await this.findSoundCardNumber(this.alsaName);
       if (soundCardNumber) {
         this.store.setSoundcardNumber(soundCardNumber);
+      }
+
+      const profiles = await this.getSoundCardProfiles();
+      if (profiles) {
+        this.store.setSupportedProfiles(profiles);
+        this.store.setPreferedProfiles(preferedProfiles);
+      } else {
+        console.warn("Could not get supported profiles");
       }
     } catch (error) {
       console.error("Error initializing audio:", error);
     }
-  }
+  };
 
-  getControl(name: string) {
-    return this.store.alsaControls[name];
-  }
-
-  async setVolume(controlName: string, volume: number) {
-    if (!this.store.soundCardNumber) {
-      console.error("Cant set volume, sound card number not set");
-      return;
-    }
-
-    const cardNumber = this.store.soundCardNumber;
+  public findSoundCardNumber = async (soundCardName: string) => {
     try {
-      await invoke("set_volume", { cardNumber, controlName, volume });
-      // Update the store after setting the volume
-      // const updatedControl = (await invoke("get_control", {
-      //   controlName,
-      // })) as string[];
+      const cardNumber = await invoke("find_sound_card_number", {
+        soundCardName,
+      });
 
-      // const formattedControls = formatControls({
-      //   [controlName]: updatedControl,
-      // });
-      // const formattedControl = formattedControls[controlName];
-
-      // if (formattedControl) {
-      //   this.store.updateControl(controlName, formattedControl);
-      // } else {
-      //   console.error(`Failed to format control: ${controlName}`);
-      // }
+      console.log(typeof cardNumber);
+      return cardNumber as number;
     } catch (error) {
-      console.error(`Error setting volume for ${controlName}:`, error);
+      console.error("Failed to initialize sound card:", error);
+      return null;
     }
-  }
+  };
 
-  getVolume(controlName: string, channel: string): number {
+  public getControl = (name: string) => {
+    return this.store.alsaControls[name];
+  };
+
+  public getGain = async () => {
+    try {
+      return await invoke("get_pipewire_gain", { cardName: this.alsaName });
+    } catch (error) {
+      console.error("failed to fetch gain:", error);
+      throw error;
+    }
+  };
+
+  public getInitialStates = async (): Promise<InitialStates> => {
+    try {
+      const states = (await invoke("get_initial_states")) as InitialStates;
+      console.log("Initial states retrieved:", states);
+      return states as InitialStates;
+    } catch (error) {
+      console.error("Failed to get initial states:", error);
+      throw error;
+    }
+  };
+
+  private getSoundCardProfiles = async () => {
+    try {
+      const profiles = await invoke("get_pipewire_profiles", {
+        cardName: this.pipewireName,
+      });
+      return profiles as string[];
+    } catch (error) {
+      console.error("Failed to get pipewire profiles:", error);
+      throw error;
+    }
+  };
+
+  public getVolume = (controlName: string, channel: string): number => {
     const control = this.getControl(controlName);
     return control?.values[channel] || 0;
-  }
+  };
 
-  async setMonitorVolume(destination: RmeOutput, volume: number) {
+  public setChannelVolume = async (
+    input: RmeInput,
+    output: RmeOutput,
+    volume: number
+  ) => {
+    if (!this.config) {
+      console.error("RmePlugin not initialized");
+      return;
+    }
+    const controlName = `${RmeInput[input]}-${RmeOutput[output]}-Master`;
+    await this.setVolume(controlName, volume);
+  };
+
+  public setGain = async (gain: number) => {
+    if (gain < 0 || gain > 1) {
+      console.warn("Volume out of range, will be clamped within 0 - 1");
+    }
+    invoke("set_pipewire_gain", { gain });
+  };
+
+  public setLineSensitivity = async (input: RmeInput, sensitivity: number) => {
+    if (input !== RmeInput.LINE1 && input !== RmeInput.LINE2) {
+      throw new Error("Line sensitivity can only be set for line inputs");
+    }
+    const controlName = `${RmeInput[input]}-Sens`;
+    try {
+      await invoke("set_sensitivity", { controlName, sensitivity });
+      console.log(`Sensitivity set to ${sensitivity} for ${controlName}`);
+    } catch (error) {
+      console.error(`Failed to set sensitivity for ${controlName}:`, error);
+    }
+  };
+
+  public setMonitorVolume = async (destination: RmeOutput, volume: number) => {
     if (!this.config) {
       console.error("RmePlugin not initialized");
       return;
@@ -100,33 +160,9 @@ export class RmePlugin {
 
     await this.setVolume(controlNameLeft, volume);
     await this.setVolume(controlNameRight, volume);
-  }
+  };
 
-  async findSoundCardNumber(soundCardName: string) {
-    try {
-      const cardNumber = await invoke("find_sound_card_number", {
-        soundCardName,
-      });
-
-      console.log(typeof cardNumber);
-      return cardNumber as number;
-    } catch (error) {
-      console.error("Failed to initialize sound card:", error);
-      return null;
-    }
-  }
-
-  async setChannelVolume(input: RmeInput, output: RmeOutput, volume: number) {
-    if (!this.config) {
-      console.error("RmePlugin not initialized");
-      return;
-    }
-    // Define control name mapping based on input and output enums
-    const controlName = `${RmeInput[input]}-${RmeOutput[output]}-Master`;
-    await this.setVolume(controlName, volume);
-  }
-
-  async setPhantomPower(input: RmeInput, state: boolean) {
+  public setPhantomPower = async (input: RmeInput, state: boolean) => {
     if (!this.config) {
       console.error("RmePlugin not initialized");
       return;
@@ -139,7 +175,7 @@ export class RmePlugin {
         index = 0;
         break;
 
-      case RmeInput.MIC1:
+      case RmeInput.MIC2:
         index = 1;
         break;
 
@@ -160,47 +196,21 @@ export class RmePlugin {
     } catch (error) {
       console.error(`Failed to set phantom power for ${controlName}:`, error);
     }
-  }
+  };
 
-  async setLineSensitivity(input: RmeInput, sensitivity: number) {
-    if (input !== RmeInput.LINE1 && input !== RmeInput.LINE2) {
-      throw new Error("Line sensitivity can only be set for line inputs");
+  public setVolume = async (controlName: string, volume: number) => {
+    if (!this.store.soundCardNumber) {
+      console.error("Cant set volume, sound card number not set");
+      return;
     }
-    const controlName = `${RmeInput[input]}-Sens`;
+
+    const cardNumber = this.store.soundCardNumber;
     try {
-      await invoke("set_sensitivity", { controlName, sensitivity });
-      console.log(`Sensitivity set to ${sensitivity} for ${controlName}`);
+      await invoke("set_volume", { cardNumber, controlName, volume });
     } catch (error) {
-      console.error(`Failed to set sensitivity for ${controlName}:`, error);
+      console.error(`Error setting volume for ${controlName}:`, error);
     }
-  }
-
-  async getInitialStates(): Promise<InitialStates> {
-    try {
-      const states = (await invoke("get_initial_states")) as InitialStates;
-      console.log("Initial states retrieved:", states);
-      return states as InitialStates;
-    } catch (error) {
-      console.error("Failed to get initial states:", error);
-      throw error;
-    }
-  }
-
-  async getGain() {
-    try {
-      return await invoke("get_pipewire_gain", { cardName: this.name });
-    } catch (error) {
-      console.error("failed to fetch gain:", error);
-      throw error;
-    }
-  }
-
-  async setGain(gain: number) {
-    if (gain < 0 || gain > 1) {
-      console.warn("Volume out of range, will be clamped within 0 - 1");
-    }
-    invoke("set_pipewire_gain", { gain });
-  }
+  };
 }
 
 export default {
