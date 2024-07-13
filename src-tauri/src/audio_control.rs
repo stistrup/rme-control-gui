@@ -66,14 +66,14 @@ pub fn get_soundcard_controls(card_name: &str) -> Result<HashMap<String, Vec<Str
         controls.insert(name, current_info);
     }
 
-    // Print the controls
-    println!("Controls:");
-    for (name, info) in &controls {
-        println!("  {}: ", name);
-        for line in info {
-            println!("    {}", line);
-        }
-    }
+    // // Print the controls
+    // println!("Controls:");
+    // for (name, info) in &controls {
+    //     println!("  {}: ", name);
+    //     for line in info {
+    //         println!("    {}", line);
+    //     }
+    // }
 
     Ok(controls)
 }
