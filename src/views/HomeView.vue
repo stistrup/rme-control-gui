@@ -20,7 +20,7 @@ const rmeStore = useRmeStore();
         <MonitorControls />
       </div>
     </div>
-    <AudioControls />
+    <!-- <AudioControls /> -->
     <p v-if="rmeStore.isInitialized === null">Getting sound card...</p>
     <p v-if="rmeStore.isInitialized === false">
       Could not initialize sound card

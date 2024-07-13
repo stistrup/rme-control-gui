@@ -10,6 +10,7 @@ import { alsaConfig } from "../config/alsaConfig";
 export class RmePlugin {
   private store: ReturnType<typeof useRmeStore>;
   private config: AlsaConfig = alsaConfig;
+  private name = "Babyface Pro";
 
   constructor() {
     this.store = useRmeStore();
@@ -17,12 +18,11 @@ export class RmePlugin {
 
   async init() {
     try {
-      const cardName = "Babyface Pro";
       const rawControls = (await invoke("get_soundcard_controls", {
-        cardName,
+        cardName: this.name,
       })) as Record<string, string[]>;
       const formattedControls = formatControls(rawControls);
-      const soundCardNumber = await this.findSoundCardNumber(cardName);
+      const soundCardNumber = await this.findSoundCardNumber(this.name);
 
       this.store.setControls(formattedControls);
       if (soundCardNumber) {
@@ -184,6 +184,22 @@ export class RmePlugin {
       console.error("Failed to get initial states:", error);
       throw error;
     }
+  }
+
+  async getGain() {
+    try {
+      return await invoke("get_pipewire_gain", { cardName: this.name });
+    } catch (error) {
+      console.error("failed to fetch gain:", error);
+      throw error;
+    }
+  }
+
+  async setGain(gain: number) {
+    if (gain < 0 || gain > 1) {
+      console.warn("Volume out of range, will be clamped within 0 - 1");
+    }
+    invoke("set_pipewire_gain", { gain });
   }
 }
 
