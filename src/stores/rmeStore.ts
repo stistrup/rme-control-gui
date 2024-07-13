@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
+import { preferedProfiles as pP } from "../config/pipewireConfig";
 
 export const useRmeStore = defineStore("rme", () => {
   const alsaControls = ref<AudioControls>({});
@@ -8,7 +9,7 @@ export const useRmeStore = defineStore("rme", () => {
   const monitorVolume = ref(0);
   const soundCardNumber = ref<number | null>(null);
   const supportedProfiles = ref<string[]>([]);
-  const preferedProfiles = ref<string[]>([]);
+  const preferedProfiles = ref(pP);
 
   const isInitialized = ref<boolean | null>(null);
 
@@ -19,10 +20,6 @@ export const useRmeStore = defineStore("rme", () => {
 
   const setControls = (newControls: AudioControls) => {
     alsaControls.value = newControls;
-  };
-
-  const setPreferedProfiles = (profiles: string[]) => {
-    preferedProfiles.value = profiles;
   };
 
   const setSupportedProfiles = (profiles: string[]) => {
@@ -50,7 +47,6 @@ export const useRmeStore = defineStore("rme", () => {
     soundCardNumber,
     supportedProfiles,
     setSoundcardNumber,
-    setPreferedProfiles,
     setSupportedProfiles,
     setControls,
     updateControl,

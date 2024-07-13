@@ -34,7 +34,6 @@ export class RmePlugin {
       const profiles = await this.getSoundCardProfiles();
       if (profiles) {
         this.store.setSupportedProfiles(profiles);
-        this.store.setPreferedProfiles(preferedProfiles);
       } else {
         console.warn("Could not get supported profiles");
       }
