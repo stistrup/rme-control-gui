@@ -3,6 +3,14 @@ export enum RmeInput {
   MIC2,
   LINE1,
   LINE2,
+  CAPTURE_L,
+  CAPTRUE_R,
+}
+
+export enum InputType {
+  MIC,
+  LINE,
+  GENERAL,
 }
 
 export enum RmeOutput {

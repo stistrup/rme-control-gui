@@ -43,6 +43,7 @@ fn get_initial_states() -> Result<InitialStates, String> {
 fn get_soundcard_controls(card_name: String) -> Result<HashMap<String, Vec<String>>, String> {
     alsa_control::get_soundcard_controls(&card_name)
 }
+
 #[tauri::command]
 fn get_pipewire_gain(port_name: String) -> Result<f32, String> {
     pipewire_control::get_gain(&port_name)

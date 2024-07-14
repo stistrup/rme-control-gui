@@ -1,4 +1,3 @@
-// src/plugins/RmePlugin.ts
 import { App } from "vue";
 import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
@@ -6,7 +5,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { RmeInput, RmeOutput, InitialStates } from "../types/rmePlugin.types";
 import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
-import { profiles } from "../config/pipewireConfig";
+import { pipewireProfiles } from "../config/pipewireConfig";
+import { mixerChannelsPro } from "../config/channelsConfig";
 
 export class RmePlugin {
   private store: ReturnType<typeof useRmeStore>;
@@ -40,7 +40,6 @@ export class RmePlugin {
 
       const activeProfile = await this.getActiveProfile();
       if (activeProfile) {
-        console.log("Setting profile yo");
         this.store.setActiveProfile(activeProfile);
       } else {
         console.warn("Could not get active profiles");
@@ -48,24 +47,6 @@ export class RmePlugin {
     } catch (error) {
       console.error("Error initializing audio:", error);
     }
-  };
-
-  private convertInputToPortName = (input: RmeInput) => {
-    let portName;
-    if (this.store.activeProfile === profiles.proAudio) {
-      if (input === RmeInput.MIC1) portName = "capture_AUX0";
-      else if (input === RmeInput.MIC2) portName = "capture_AUX1";
-      else if (input === RmeInput.LINE1) portName = "capture_AUX2";
-      else if (input === RmeInput.LINE2) portName = "capture_AUX3";
-      else {
-        console.error("Unsopported input type when getting gain");
-        return;
-      }
-    } else {
-      console.error("This command is only supported in pro-audio profile");
-      return;
-    }
-    return portName;
   };
 
   public findSoundCardNumber = async (soundCardName: string) => {
@@ -99,15 +80,13 @@ export class RmePlugin {
     return this.store.alsaControls[name];
   };
 
-  public getGain = async (input: RmeInput) => {
-    // let portName = this.convertInputToPortName(input);
-    // if (!portName) return;
-    // try {
-    //   return await invoke("get_pipewire_gain", { portName });
-    // } catch (error) {
-    //   console.error("failed to fetch gain:", error);
-    //   throw error;
-    // }
+  public getGain = async (portName: string) => {
+    try {
+      return await invoke("get_pipewire_gain", { portName });
+    } catch (error) {
+      console.error("failed to fetch gain:", error);
+      throw error;
+    }
   };
 
   public getInitialStates = async (): Promise<InitialStates> => {
@@ -165,13 +144,7 @@ export class RmePlugin {
     await this.setVolume(controlName, volume);
   };
 
-  public setGain = async (input: RmeInput, gain: number) => {
-    const portName = this.convertInputToPortName(input);
-    if (!portName) {
-      console.error("Could not get port name when setting name");
-      return;
-    }
-
+  public setGain = async (portName: string, gain: number) => {
     if (gain < 0 || gain > 1) {
       console.warn("Volume out of range, will be clamped within 0 - 1");
     }

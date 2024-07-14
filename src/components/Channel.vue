@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { inject, onMounted, ref, watch } from "vue";
+import { inject, onMounted, ref, watch, watchEffect } from "vue";
 import Fader from "./Fader.vue";
 import Knob from "./Knob.vue";
 import { RmePlugin } from "../plugins/RmePlugin";
-import { RmeInput } from "../types/rmePlugin.types";
+import { InputType, RmeInput } from "../types/rmePlugin.types";
 import { useRmeStore } from "../stores/rmeStore";
+import { MixerChannel } from "../types/rmeStore.types";
 
-const MIC_INPUT_GAIN_RANGE = 78;
+interface ChannelProps {
+  channel: MixerChannel;
+}
+
+const props = defineProps<ChannelProps>();
+
+const INPUT_GAIN_RANGE = props.channel.inputType === InputType.MIC ? 78 : 20;
 
 const rmePlugin = inject<RmePlugin>("RmePlugin");
 const rmeStore = useRmeStore();
@@ -17,24 +24,30 @@ if (!rmePlugin) {
 }
 
 const handleGainInput = (newValue: number) => {
-  const floatValue = newValue / MIC_INPUT_GAIN_RANGE;
-  rmePlugin.setGain(RmeInput.MIC1, floatValue);
+  const floatValue = newValue / INPUT_GAIN_RANGE;
+  rmePlugin.setGain(props.channel.pipewirePortName, floatValue);
+};
+
+watchEffect(() => {
+  console.log(props.channel.name, "gain value:", gain.value);
+});
+
+const getGain = async () => {
+  if (rmeStore.activeProfile !== rmeStore.profileProAudio) return;
+  const initialGainFloat = (await rmePlugin.getGain(
+    props.channel.pipewirePortName
+  )) as number;
+  gain.value = initialGainFloat * INPUT_GAIN_RANGE;
 };
 
 onMounted(async () => {
-  if (rmeStore.activeProfile) {
-    const initialGain = (await rmePlugin.getGain(RmeInput.MIC1)) as number;
-    gain.value = initialGain * MIC_INPUT_GAIN_RANGE;
-  } else {
-    watch(
-      () => rmeStore.activeProfile,
-      async () => {
-        const initialGain = (await rmePlugin.getGain(RmeInput.MIC1)) as number;
-        console.log("yoooo", initialGain);
-        gain.value = initialGain * MIC_INPUT_GAIN_RANGE;
-      }
-    );
-  }
+  getGain();
+  watch(
+    () => rmeStore.activeProfile,
+    async () => {
+      getGain();
+    }
+  );
 });
 </script>
 
@@ -44,8 +57,8 @@ onMounted(async () => {
       label="gain"
       :model-value="gain"
       :min="0"
-      :max="MIC_INPUT_GAIN_RANGE"
-      :step="0.001"
+      :max="INPUT_GAIN_RANGE"
+      :step="1"
       @newValue="handleGainInput"
     />
     <Fader label="volume" :model-value="0" />

@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
-import { profiles } from "../config/pipewireConfig";
+import { pipewireProfiles } from "../config/pipewireConfig";
+import { MixerChannel } from "../types/rmeStore.types";
+import {
+  mixerChannelsDefault,
+  mixerChannelsPro,
+} from "../config/channelsConfig";
 
 export const useRmeStore = defineStore("rme", () => {
   const activeProfile = ref<null | string>(null);
@@ -10,6 +15,7 @@ export const useRmeStore = defineStore("rme", () => {
   const monitorVolume = ref(0);
   const soundCardNumber = ref<number | null>(null);
   const supportedProfiles = ref<string[]>([]);
+  const mixerChannels = ref<MixerChannel[]>([]);
 
   const isInitialized = ref<boolean | null>(null);
 
@@ -22,6 +28,12 @@ export const useRmeStore = defineStore("rme", () => {
   const setActiveProfile = (profile: string) => {
     if (supportedProfiles.value.includes(profile)) {
       activeProfile.value = profile;
+
+      if (profile === pipewireProfiles.proAudio) {
+        setMixerChannels(mixerChannelsPro);
+      } else if (profile === pipewireProfiles.default) {
+        setMixerChannels(mixerChannelsDefault);
+      }
     } else {
       console.warn(`Profile "${profile}" is not supported`);
     }
@@ -36,6 +48,10 @@ export const useRmeStore = defineStore("rme", () => {
     alsaControls.value = newControls;
   };
 
+  const setMixerChannels = (channels: MixerChannel[]) => {
+    mixerChannels.value = channels;
+  };
+
   const setSupportedProfiles = (profiles: string[]) => {
     supportedProfiles.value = profiles;
   };
@@ -48,13 +64,13 @@ export const useRmeStore = defineStore("rme", () => {
 
   const profileProAudio = computed(() => {
     return supportedProfiles.value.find(
-      (profile) => profile === profiles.proAudio
+      (profile) => profile === pipewireProfiles.proAudio
     );
   });
 
   const profileDefault = computed(() => {
     return supportedProfiles.value.find(
-      (profile) => profile === profiles.default
+      (profile) => profile === pipewireProfiles.default
     );
   });
 
@@ -63,6 +79,7 @@ export const useRmeStore = defineStore("rme", () => {
     alsaControls,
     headphoneVolume,
     isInitialized,
+    mixerChannels,
     monitorVolume,
     profileDefault,
     profileProAudio,
@@ -71,6 +88,7 @@ export const useRmeStore = defineStore("rme", () => {
     isSupportedProfile,
     setActiveProfile,
     setControls,
+    setMixerChannels,
     setSoundcardNumber,
     setSupportedProfiles,
     updateControl,

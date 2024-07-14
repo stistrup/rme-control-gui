@@ -2,9 +2,10 @@
 import ProfileSwitch from "./ProfileSwitch.vue";
 import { useRmeStore } from "../stores/rmeStore";
 import { inject } from "vue";
+import { RmePlugin } from "../plugins/RmePlugin";
 
 const rmeStore = useRmeStore();
-const rmePlugin = inject("RmePlugin");
+const rmePlugin = inject<RmePlugin>("RmePlugin");
 
 if (!rmePlugin) {
   throw new Error("Could not load rme plugin");
