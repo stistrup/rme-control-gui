@@ -1,17 +1,31 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
-import { preferedProfiles as pP } from "../config/pipewireConfig";
+import { profiles } from "../config/pipewireConfig";
 
 export const useRmeStore = defineStore("rme", () => {
+  const activeProfile = ref<null | string>(null);
   const alsaControls = ref<AudioControls>({});
   const headphoneVolume = ref(0);
   const monitorVolume = ref(0);
   const soundCardNumber = ref<number | null>(null);
   const supportedProfiles = ref<string[]>([]);
-  const preferedProfiles = ref(pP);
 
   const isInitialized = ref<boolean | null>(null);
+
+  const isSupportedProfile = (profile: string) => {
+    return supportedProfiles.value.some(
+      (supportedProfile) => supportedProfile === profile
+    );
+  };
+
+  const setActiveProfile = (profile: string) => {
+    if (supportedProfiles.value.includes(profile)) {
+      activeProfile.value = profile;
+    } else {
+      console.warn(`Profile "${profile}" is not supported`);
+    }
+  };
 
   const setSoundcardNumber = (cardNumber: number) => {
     soundCardNumber.value = cardNumber;
@@ -32,23 +46,33 @@ export const useRmeStore = defineStore("rme", () => {
     }
   }
 
-  const availableProfiles = computed(() => {
-    return preferedProfiles.value.filter((profile) =>
-      supportedProfiles.value.includes(profile)
+  const profileProAudio = computed(() => {
+    return supportedProfiles.value.find(
+      (profile) => profile === profiles.proAudio
+    );
+  });
+
+  const profileDefault = computed(() => {
+    return supportedProfiles.value.find(
+      (profile) => profile === profiles.default
     );
   });
 
   return {
-    availableProfiles,
+    activeProfile,
     alsaControls,
+    headphoneVolume,
     isInitialized,
     monitorVolume,
-    headphoneVolume,
+    profileDefault,
+    profileProAudio,
     soundCardNumber,
     supportedProfiles,
+    isSupportedProfile,
+    setActiveProfile,
+    setControls,
     setSoundcardNumber,
     setSupportedProfiles,
-    setControls,
     updateControl,
   };
 });

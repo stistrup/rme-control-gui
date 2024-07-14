@@ -6,7 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { RmeInput, RmeOutput, InitialStates } from "../types/rmePlugin.types";
 import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
-import { preferedProfiles } from "../config/pipewireConfig";
+import { profiles } from "../config/pipewireConfig";
 
 export class RmePlugin {
   private store: ReturnType<typeof useRmeStore>;
@@ -18,7 +18,7 @@ export class RmePlugin {
     this.store = useRmeStore();
   }
 
-  public init = async () => {
+  public getCurrentStates = async () => {
     try {
       const rawControls = (await invoke("get_soundcard_controls", {
         cardName: this.alsaName,
@@ -37,9 +37,35 @@ export class RmePlugin {
       } else {
         console.warn("Could not get supported profiles");
       }
+
+      const activeProfile = await this.getActiveProfile();
+      if (activeProfile) {
+        console.log("Setting profile yo");
+        this.store.setActiveProfile(activeProfile);
+      } else {
+        console.warn("Could not get active profiles");
+      }
     } catch (error) {
       console.error("Error initializing audio:", error);
     }
+  };
+
+  private convertInputToPortName = (input: RmeInput) => {
+    let portName;
+    if (this.store.activeProfile === profiles.proAudio) {
+      if (input === RmeInput.MIC1) portName = "capture_AUX0";
+      else if (input === RmeInput.MIC2) portName = "capture_AUX1";
+      else if (input === RmeInput.LINE1) portName = "capture_AUX2";
+      else if (input === RmeInput.LINE2) portName = "capture_AUX3";
+      else {
+        console.error("Unsopported input type when getting gain");
+        return;
+      }
+    } else {
+      console.error("This command is only supported in pro-audio profile");
+      return;
+    }
+    return portName;
   };
 
   public findSoundCardNumber = async (soundCardName: string) => {
@@ -56,17 +82,32 @@ export class RmePlugin {
     }
   };
 
+  private getActiveProfile = async () => {
+    try {
+      const activeProfile = await invoke("get_pipewire_active_profile", {
+        cardName: this.pipewireName,
+      });
+      console.log("Active profile retrieved:", activeProfile);
+      return activeProfile as string;
+    } catch (error) {
+      console.error("Failed to get active profile:", error);
+      throw error;
+    }
+  };
+
   public getControl = (name: string) => {
     return this.store.alsaControls[name];
   };
 
-  public getGain = async () => {
-    try {
-      return await invoke("get_pipewire_gain", { cardName: this.alsaName });
-    } catch (error) {
-      console.error("failed to fetch gain:", error);
-      throw error;
-    }
+  public getGain = async (input: RmeInput) => {
+    // let portName = this.convertInputToPortName(input);
+    // if (!portName) return;
+    // try {
+    //   return await invoke("get_pipewire_gain", { portName });
+    // } catch (error) {
+    //   console.error("failed to fetch gain:", error);
+    //   throw error;
+    // }
   };
 
   public getInitialStates = async (): Promise<InitialStates> => {
@@ -97,6 +138,20 @@ export class RmePlugin {
     return control?.values[channel] || 0;
   };
 
+  public setPipewireProfile = async (profile: string) => {
+    try {
+      await invoke("set_pipewire_profile", {
+        cardName: this.pipewireName,
+        profile,
+      });
+
+      this.getCurrentStates();
+    } catch (error) {
+      console.error("Failed to get pipewire profiles:", error);
+      throw error;
+    }
+  };
+
   public setChannelVolume = async (
     input: RmeInput,
     output: RmeOutput,
@@ -110,11 +165,17 @@ export class RmePlugin {
     await this.setVolume(controlName, volume);
   };
 
-  public setGain = async (gain: number) => {
+  public setGain = async (input: RmeInput, gain: number) => {
+    const portName = this.convertInputToPortName(input);
+    if (!portName) {
+      console.error("Could not get port name when setting name");
+      return;
+    }
+
     if (gain < 0 || gain > 1) {
       console.warn("Volume out of range, will be clamped within 0 - 1");
     }
-    invoke("set_pipewire_gain", { gain });
+    invoke("set_pipewire_gain", { portName, gain });
   };
 
   public setLineSensitivity = async (input: RmeInput, sensitivity: number) => {

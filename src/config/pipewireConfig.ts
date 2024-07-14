@@ -1,4 +1,4 @@
-export const preferedProfiles = [
-  "output:analog-stereo+input:analog-stereo",
-  "pro-audio",
-];
+export const profiles = {
+  default: "output:analog-stereo+input:analog-stereo",
+  proAudio: "pro-audio",
+};

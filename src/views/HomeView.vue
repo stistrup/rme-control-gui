@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ChannelInputs from "../components/ChannelInputs.vue";
 import MonitorControls from "../components/MonitorControls.vue";
-import AudioControls from "../components/AudioControls.vue";
+import AudioSettings from "../components/AudioSettings.vue";
 import { useRmeStore } from "../stores/rmeStore";
 
 const rmeStore = useRmeStore();
@@ -19,6 +19,7 @@ const rmeStore = useRmeStore();
       <div :class="$style.mainControls">
         <MonitorControls />
       </div>
+      <AudioSettings />
     </div>
     <!-- <AudioControls /> -->
     <p v-if="rmeStore.isInitialized === null">Getting sound card...</p>

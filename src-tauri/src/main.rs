@@ -44,13 +44,13 @@ fn get_soundcard_controls(card_name: String) -> Result<HashMap<String, Vec<Strin
     alsa_control::get_soundcard_controls(&card_name)
 }
 #[tauri::command]
-fn get_pipewire_gain() -> Result<f32, String> {
-    pipewire_control::get_gain("capture_AUX0")
+fn get_pipewire_gain(port_name: String) -> Result<f32, String> {
+    pipewire_control::get_gain(&port_name)
 }
 
 #[tauri::command]
-fn set_pipewire_gain(gain: f32) -> Result<(), String> {
-    pipewire_control::set_gain("capture_AUX0", gain)
+fn set_pipewire_gain(port_name: String, gain: f32) -> Result<(), String> {
+    pipewire_control::set_gain(&port_name, gain)
 }
 
 #[tauri::command]

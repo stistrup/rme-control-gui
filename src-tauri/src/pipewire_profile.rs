@@ -51,6 +51,7 @@ pub fn set_profile(card_id: &str, profile: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to execute pactl: {}", e))?;
 
     if output.status.success() {
+        println!("Set profile for id {} to {}", card_id, profile);
         Ok(())
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
