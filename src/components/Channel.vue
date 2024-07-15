@@ -26,6 +26,7 @@ const hasPhantomSupport = computed(() => {
 });
 const phantomOn = ref(false);
 const currentLineSens = ref<string | null>(null);
+const isHeadphones = ref(false);
 
 const rmePlugin = inject<RmePlugin>("RmePlugin");
 const rmeStore = useRmeStore();
@@ -43,6 +44,10 @@ const handleGainInput = (newValue: number) => {
 watchEffect(() => {
   console.log(props.channel.name, "gain value:", gain.value);
 });
+
+const toggleOutput = () => {
+  isHeadphones.value = !isHeadphones.value;
+};
 
 const getGain = async () => {
   if (rmeStore.activeProfile !== rmeStore.profileProAudio) return;
@@ -110,6 +115,9 @@ onMounted(async () => {
       :step="1"
       @newValue="handleGainInput"
     />
+    <button @click="toggleOutput" :class="$style.outputToggle">
+      {{ isHeadphones ? "Headphones" : "Monitors" }}
+    </button>
     <Fader label="volume" :model-value="0" />
     <button
       v-if="hasPhantomSupport"
