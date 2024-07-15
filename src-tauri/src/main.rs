@@ -24,6 +24,15 @@ fn set_volume(control_name: String, volume: i32) -> Result<(), String> {
     alsa_control::set_volume(&control_name, volume)
 }
 
+#[tauri::command]
+fn set_phantom_power(mic_alsa_name: String, new_state: bool) -> Result<(), String> {
+    alsa_control::set_phantom_power(&mic_alsa_name, new_state)
+}
+#[tauri::command]
+fn get_phantom_power_state(sound_card_name: String, mic_alsa_name: String) -> Result<bool, String> {
+    alsa_control::get_phantom_power_state(&sound_card_name, &mic_alsa_name)
+}
+
 #[derive(Serialize)]
 struct InitialStates {
     headphones_volume: i32,
@@ -67,6 +76,11 @@ fn set_pipewire_profile(card_name: String, profile: String) -> Result<(), String
 }
 
 #[tauri::command]
+fn set_buffer_size(buffer_size: u32) -> Result<(), String> {
+    pipewire_control::set_buffer_size(buffer_size)
+}
+
+#[tauri::command]
 fn get_pipewire_profiles(card_name: String) -> Result<Vec<String>, String> {
     let card_id = pipewire_profile::get_card_id(&card_name)?;
     pipewire_profile::get_profiles(&card_id)
@@ -84,16 +98,19 @@ fn main() {
             Ok(())
           })
         .invoke_handler(tauri::generate_handler![
-            find_sound_card_number,
             change_buffer_size,
-            set_volume,
+            find_sound_card_number,
             get_initial_states,
-            get_soundcard_controls,
-            get_pipewire_gain,
+            get_phantom_power_state,
             get_pipewire_active_profile,
+            get_pipewire_gain,
             get_pipewire_profiles,
+            get_soundcard_controls,
+            set_buffer_size,
+            set_phantom_power,
             set_pipewire_gain,
             set_pipewire_profile,
+            set_volume,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

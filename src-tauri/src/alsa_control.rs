@@ -216,3 +216,55 @@ pub fn get_initial_states() -> Result<(i32, i32), String> {
 
 //     Ok((volume - min) * 100 / (max - min))
 // }
+
+pub fn set_phantom_power(mic: &str, new_state: bool) -> Result<(), String> {
+    let sound_card_number = SOUND_CARD_NUMBER
+        .lock()
+        .unwrap()
+        .ok_or("Sound card number not initialized")?;
+    
+    let state = if new_state { "on" } else { "off" };
+    
+    let output = Command::new("amixer")
+        .args(&["-c", &sound_card_number.to_string(), "set", mic, state])
+        .output()
+        .map_err(|e| e.to_string())?;
+    
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+pub fn get_phantom_power_state(sound_card_name: &str, mic_name: &str) -> Result<bool, String> {
+    let card_index = find_card_index(sound_card_name)?;
+
+    let output = Command::new("amixer")
+        .args(&["-c", &card_index, "get", mic_name])
+        .output()
+        .map_err(|e| format!("Failed to execute amixer: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    let mut is_phantom_on = false;
+    let mut mic_found = false;
+
+    for line in stdout.lines() {
+        if line.starts_with("Simple mixer control") && line.contains(mic_name) && line.contains("48V") {
+            mic_found = true;
+            continue;
+        }
+
+        if mic_found && line.contains("Mono: Playback") {
+            is_phantom_on = line.contains("[on]");
+            break;
+        }
+    }
+
+    if mic_found {
+        Ok(is_phantom_on)
+    } else {
+        Err(format!("Microphone {} not found", mic_name))
+    }
+}

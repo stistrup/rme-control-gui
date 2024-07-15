@@ -44,52 +44,17 @@ pub fn find_pipewire_ids(target_port_name: &str) -> Result<(String, String), Str
     Err(format!("Could not find IDs for port name: {}", target_port_name))
 }
 
-// fn get_cached_node_id(target_port_name: &str) -> Result<String, String> {
-//     let mut cache = NODE_ID_CACHE.lock().unwrap();
-//     if let Some(node_id) = cache.get(target_port_name) {
-//         return Ok(node_id.clone());
-//     }
-//     let node_id = find_pipewire_node_id(target_port_name)?;
-//     cache.insert(target_port_name.to_string(), node_id.clone());
-//     Ok(node_id)
-// }
-
-// pub fn update_node_id_cache(target_port_name: &str) -> Result<(), String> {
-//     let node_id = find_pipewire_node_id(target_port_name)?;
-//     let mut cache = NODE_ID_CACHE.lock().unwrap();
-//     cache.insert(target_port_name.to_string(), node_id);
-//     Ok(())
-// }
-
-// pub fn set_input_gain(node_id: &str, gain: f32) -> Result<(), String> {
-//     let output = Command::new("pw-cli")
-//         .args(&["set-param", node_id, "Props", &format!("{{\"volume\": {}}}", gain)])
-//         .output()
-//         .map_err(|e| e.to_string())?;
-
-//     if output.status.success() {
-//         Ok(())
-//     } else {
-//         let stderr = String::from_utf8_lossy(&output.stderr);
-//         println!("pw-cli stderr: {}", stderr);
-//         Err(stderr.to_string())
-//     }
-// }
-
 pub fn set_input_gain(node_id: &str, object_id: &str, port_name: &str, gain: f32) -> Result<(), String> {
-    // Method 1: Set volume on the node
     let output1 = Command::new("pw-cli")
         .args(&["set-param", node_id, "Props", &format!("{{\"volume\": {}}}", gain)])
         .output()
         .map_err(|e| e.to_string())?;
 
-    // Method 2: Set volume on the object
     let output2 = Command::new("pw-cli")
         .args(&["set-param", object_id, "Props", &format!("{{\"volume\": {}}}", gain)])
         .output()
         .map_err(|e| e.to_string())?;
 
-    // Method 3: Try to set volume using the port name
     let output3 = Command::new("pw-cli")
         .args(&["set-param", node_id, "Props", &format!("{{\"{}:volume\": {}}}", port_name, gain)])
         .output()
@@ -99,7 +64,6 @@ pub fn set_input_gain(node_id: &str, object_id: &str, port_name: &str, gain: f32
     println!("Method 2 (object) result: {:?}", output2.status);
     println!("Method 3 (port) result: {:?}", output3.status);
 
-    // Check if any method succeeded
     if output1.status.success() || output2.status.success() || output3.status.success() {
         Ok(())
     } else {
@@ -146,4 +110,24 @@ pub fn set_gain(target_port_name: &str, gain: f32) -> Result<(), String> {
     println!("Setting gain for {} (node: {}, object: {}) to {}", target_port_name, node_id, object_id, clamped_gain);
     set_input_gain(&node_id, &object_id, target_port_name, clamped_gain)?;
     Ok(())
+}
+
+pub fn set_buffer_size(buffer_size: u32) -> Result<(), String> {
+    if buffer_size < 32 || buffer_size > 2048 || (buffer_size & (buffer_size - 1)) != 0 {
+        return Err("The buffer size must be a power of two between 32 and 8192".to_string());
+    }
+
+    let output = Command::new("pw-metadata")
+        .args(&["-n", "settings", "0", "clock.force-quantum", &buffer_size.to_string()])
+        .output()
+        .map_err(|e| format!("Failed to execute pw-metadata: {}", e))?;
+
+    if output.status.success() {
+        println!("Audio buffer set to {}", buffer_size);
+        Ok(())
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        println!("pw-metadata stderr: {}", stderr);
+        Err(stderr.to_string())
+    }
 }

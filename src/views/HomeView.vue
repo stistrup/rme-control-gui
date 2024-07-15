@@ -2,6 +2,7 @@
 import ChannelInputs from "../components/ChannelInputs.vue";
 import MonitorControls from "../components/MonitorControls.vue";
 import AudioSettings from "../components/AudioSettings.vue";
+import AudioControls from "../components/AudioControls.vue";
 import { useRmeStore } from "../stores/rmeStore";
 
 const rmeStore = useRmeStore();
@@ -21,7 +22,7 @@ const rmeStore = useRmeStore();
       </div>
       <AudioSettings />
     </div>
-    <!-- <AudioControls /> -->
+    <AudioControls />
     <p v-if="rmeStore.isInitialized === null">Getting sound card...</p>
     <p v-if="rmeStore.isInitialized === false">
       Could not initialize sound card

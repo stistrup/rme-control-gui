@@ -2,11 +2,17 @@ import { App } from "vue";
 import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
 import { invoke } from "@tauri-apps/api/core";
-import { RmeInput, RmeOutput, InitialStates } from "../types/rmePlugin.types";
+import {
+  RmeInput,
+  RmeOutput,
+  InitialStates,
+  InputType,
+} from "../types/rmePlugin.types";
 import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
 import { pipewireProfiles } from "../config/pipewireConfig";
 import { mixerChannelsPro } from "../config/channelsConfig";
+import { MixerChannel } from "../types/rmeStore.types";
 
 export class RmePlugin {
   private store: ReturnType<typeof useRmeStore>;
@@ -89,6 +95,28 @@ export class RmePlugin {
     }
   };
 
+  public getPhantomState = async (channel: MixerChannel) => {
+    const alsaEntry = alsaConfig.inputs.find(
+      (input) => input.input === channel.input
+    );
+
+    if (!alsaEntry?.controls.phantom) return;
+
+    const fullName = `${alsaEntry.alsaName} ${alsaEntry.controls.phantom}`;
+
+    try {
+      const phantomState = (await invoke("get_phantom_power_state", {
+        soundCardName: this.alsaName,
+        micAlsaName: fullName,
+      })) as boolean;
+      console.log("Phantom state for", phantomState);
+      return phantomState;
+    } catch (error) {
+      console.error("Failed to get initial states:", error);
+      throw error;
+    }
+  };
+
   public getInitialStates = async (): Promise<InitialStates> => {
     try {
       const states = (await invoke("get_initial_states")) as InitialStates;
@@ -115,6 +143,58 @@ export class RmePlugin {
   public getVolume = (controlName: string, channel: string): number => {
     const control = this.getControl(controlName);
     return control?.values[channel] || 0;
+  };
+
+  public setBufferSize = async (bufferSize: number) => {
+    if (
+      bufferSize < 32 ||
+      bufferSize > 2048 ||
+      (bufferSize & (bufferSize - 1)) != 0
+    ) {
+      console.error(
+        "The buffer size must be a power of two between 32 and 8192"
+      );
+      return;
+    }
+
+    try {
+      await invoke("set_buffer_size", {
+        bufferSize,
+      });
+    } catch (error) {
+      console.error("Failed to get pipewire profiles:", error);
+      throw error;
+    }
+  };
+
+  public setPhantomPower = async (channel: MixerChannel, newState: boolean) => {
+    if (channel.inputType !== InputType.MIC) {
+      console.error("This input type doesnt support phantom power");
+      return;
+    }
+
+    const alsaEntry = alsaConfig.inputs.find(
+      (input) => input.input === channel.input
+    );
+
+    if (!alsaEntry?.controls.phantom) {
+      console.error("Alsa not properly configured for phantom");
+      return;
+    }
+
+    const fullAlsaName = `${alsaEntry.alsaName} ${alsaEntry.controls.phantom}`;
+
+    try {
+      await invoke("set_phantom_power", {
+        micAlsaName: fullAlsaName,
+        newState: newState,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Failed to get pipewire profiles:", error);
+      throw error;
+    }
   };
 
   public setPipewireProfile = async (profile: string) => {
@@ -193,42 +273,6 @@ export class RmePlugin {
 
     await this.setVolume(controlNameLeft, volume);
     await this.setVolume(controlNameRight, volume);
-  };
-
-  public setPhantomPower = async (input: RmeInput, state: boolean) => {
-    if (!this.config) {
-      console.error("RmePlugin not initialized");
-      return;
-    }
-
-    let index = 0;
-
-    switch (input) {
-      case RmeInput.MIC1:
-        index = 0;
-        break;
-
-      case RmeInput.MIC2:
-        index = 1;
-        break;
-
-      default:
-        throw new Error("Phantom power can only be set for microphone inputs");
-    }
-
-    const switchName = this.config.inputs[index].controls.sensitivity;
-    if (!switchName) return;
-    const sourceName = this.config.inputs[index].alsaName;
-
-    const controlName = `${sourceName} ${switchName}`;
-    const controlCommand = state ? "on" : "off";
-
-    try {
-      await invoke("set_switch", { controlName, controlCommand });
-      console.log(`Phantom power set to ${state} for ${controlName}`);
-    } catch (error) {
-      console.error(`Failed to set phantom power for ${controlName}:`, error);
-    }
   };
 
   public setVolume = async (controlName: string, volume: number) => {

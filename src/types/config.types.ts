@@ -1,3 +1,5 @@
+import { RmeInput } from "./rmePlugin.types";
+
 export interface StereoOutput {
   displayName: string;
   alsaNameLeft: string;
@@ -6,6 +8,7 @@ export interface StereoOutput {
 
 export interface Input {
   alsaName: string;
+  input: RmeInput;
   displayName: string;
   controls: {
     phantom?: string;

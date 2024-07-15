@@ -1,4 +1,5 @@
 import { AlsaConfig } from "../types/config.types";
+import { RmeInput } from "../types/rmePlugin.types";
 
 export const alsaConfig: AlsaConfig = {
   outputs: [
@@ -17,6 +18,7 @@ export const alsaConfig: AlsaConfig = {
     {
       alsaName: "Mic-AN1",
       displayName: "Mic 1",
+      input: RmeInput.MIC1,
       controls: {
         phantom: "48V",
       },
@@ -24,6 +26,7 @@ export const alsaConfig: AlsaConfig = {
     {
       alsaName: "Mic-AN2",
       displayName: "Mic 2",
+      input: RmeInput.MIC2,
       controls: {
         phantom: "48V",
       },
@@ -31,6 +34,7 @@ export const alsaConfig: AlsaConfig = {
     {
       alsaName: "Line-IN3",
       displayName: "Line 3",
+      input: RmeInput.LINE1,
       controls: {
         sensitivity: "Sens.",
       },
@@ -38,6 +42,7 @@ export const alsaConfig: AlsaConfig = {
     {
       alsaName: "Line-IN4",
       displayName: "Line 4",
+      input: RmeInput.LINE2,
       controls: {
         sensitivity: "Sens.",
       },

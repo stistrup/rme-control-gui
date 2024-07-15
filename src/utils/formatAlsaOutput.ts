@@ -36,6 +36,11 @@ export const formatControls = (
         if (valueMatch) {
           control.values[channel] = parseInt(valueMatch[1]);
         }
+      } else if (
+        line.includes("Item0: 'On'") ||
+        line.includes("Item0: 'Off'")
+      ) {
+        control.values.phantom = line.includes("Item0: 'On'") ? 1 : 0;
       }
     }
 
