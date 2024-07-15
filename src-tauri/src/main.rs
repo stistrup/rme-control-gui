@@ -33,6 +33,16 @@ fn get_phantom_power_state(sound_card_name: String, mic_alsa_name: String) -> Re
     alsa_control::get_phantom_power_state(&sound_card_name, &mic_alsa_name)
 }
 
+#[tauri::command]
+fn get_line_input_sensitivity(sound_card_name: String, line_input_name: String) -> Result<String, String> {
+    alsa_control::get_line_input_sensitivity(&sound_card_name, &line_input_name)
+}
+
+#[tauri::command]
+fn set_line_input_sensitivity(sound_card_name: String, line_input_name: String, sensitivity: String) -> Result<(), String> {
+    alsa_control::set_line_input_sensitivity(&sound_card_name, &line_input_name, &sensitivity)
+}
+
 #[derive(Serialize)]
 struct InitialStates {
     headphones_volume: i32,
@@ -101,12 +111,14 @@ fn main() {
             change_buffer_size,
             find_sound_card_number,
             get_initial_states,
+            get_line_input_sensitivity,
             get_phantom_power_state,
             get_pipewire_active_profile,
             get_pipewire_gain,
             get_pipewire_profiles,
             get_soundcard_controls,
             set_buffer_size,
+            set_line_input_sensitivity,
             set_phantom_power,
             set_pipewire_gain,
             set_pipewire_profile,

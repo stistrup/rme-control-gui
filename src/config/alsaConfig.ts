@@ -56,3 +56,8 @@ export const alsaConfig: AlsaConfig = {
     },
   ],
 };
+
+export const lineSensitivity = {
+  high: "-10dBV",
+  low: "+4dBu",
+};

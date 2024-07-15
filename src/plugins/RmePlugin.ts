@@ -10,8 +10,6 @@ import {
 } from "../types/rmePlugin.types";
 import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
-import { pipewireProfiles } from "../config/pipewireConfig";
-import { mixerChannelsPro } from "../config/channelsConfig";
 import { MixerChannel } from "../types/rmeStore.types";
 
 export class RmePlugin {
@@ -117,6 +115,28 @@ export class RmePlugin {
     }
   };
 
+  public getLineSensitivity = async (channel: MixerChannel) => {
+    const alsaEntry = alsaConfig.inputs.find(
+      (input) => input.input === channel.input
+    );
+
+    if (!alsaEntry?.controls.sensitivity) return;
+
+    const fullName = `${alsaEntry.alsaName} ${alsaEntry.controls.sensitivity}`;
+
+    try {
+      const sensitivity = (await invoke("get_line_input_sensitivity", {
+        soundCardName: this.alsaName,
+        lineInputName: fullName,
+      })) as string;
+      console.log("sensitivity for", channel.name, "is", sensitivity);
+      return sensitivity;
+    } catch (error) {
+      console.error("Failed to get initial states:", error);
+      throw error;
+    }
+  };
+
   public getInitialStates = async (): Promise<InitialStates> => {
     try {
       const states = (await invoke("get_initial_states")) as InitialStates;
@@ -167,6 +187,39 @@ export class RmePlugin {
     }
   };
 
+  public setLineSensitivity = async (
+    channel: MixerChannel,
+    newSens: string
+  ) => {
+    if (channel.inputType !== InputType.LINE) {
+      console.error("This input type doesnt support line sensitivity");
+      return;
+    }
+
+    const alsaEntry = alsaConfig.inputs.find(
+      (input) => input.input === channel.input
+    );
+
+    if (!alsaEntry?.controls.sensitivity) {
+      console.error("Alsa not properly configured for lineSensitivity");
+      return;
+    }
+
+    const fullAlsaName = `${alsaEntry.alsaName} ${alsaEntry.controls.sensitivity}`;
+
+    try {
+      await invoke("set_line_input_sensitivity", {
+        soundCardName: this.alsaName,
+        lineInputName: fullAlsaName,
+        sensitivity: newSens,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Failed to set line sensitivity", error);
+      throw error;
+    }
+  };
   public setPhantomPower = async (channel: MixerChannel, newState: boolean) => {
     if (channel.inputType !== InputType.MIC) {
       console.error("This input type doesnt support phantom power");
@@ -229,19 +282,6 @@ export class RmePlugin {
       console.warn("Volume out of range, will be clamped within 0 - 1");
     }
     invoke("set_pipewire_gain", { portName, gain });
-  };
-
-  public setLineSensitivity = async (input: RmeInput, sensitivity: number) => {
-    if (input !== RmeInput.LINE1 && input !== RmeInput.LINE2) {
-      throw new Error("Line sensitivity can only be set for line inputs");
-    }
-    const controlName = `${RmeInput[input]}-Sens`;
-    try {
-      await invoke("set_sensitivity", { controlName, sensitivity });
-      console.log(`Sensitivity set to ${sensitivity} for ${controlName}`);
-    } catch (error) {
-      console.error(`Failed to set sensitivity for ${controlName}:`, error);
-    }
   };
 
   public setMonitorVolume = async (destination: RmeOutput, volume: number) => {
