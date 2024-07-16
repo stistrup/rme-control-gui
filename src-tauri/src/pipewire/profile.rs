@@ -1,22 +1,6 @@
 use std::process::Command;
 use regex::Regex;
 
-pub fn get_card_id(card_name: &str) -> Result<String, String> {
-    let output = Command::new("pactl")
-        .args(&["list", "cards", "short"])
-        .output()
-        .map_err(|e| format!("Failed to execute pactl: {}", e))?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    for line in stdout.lines() {
-        if line.contains(card_name) {
-            return Ok(line.split_whitespace().next().unwrap_or("").to_string());
-        }
-    }
-
-    Err(format!("Could not find card with name: {}", card_name))
-}
-
 pub fn get_active_profile(card_id: &str) -> Result<String, String> {
     let output = Command::new("pactl")
         .args(&["list", "cards"])
