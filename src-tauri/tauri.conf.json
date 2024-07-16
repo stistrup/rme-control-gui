@@ -1,7 +1,7 @@
 {
   "productName": "rme-babyface-control",
   "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "steffes.mega.rme.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",

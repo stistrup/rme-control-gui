@@ -2,7 +2,6 @@
 import ChannelInputs from "../components/ChannelInputs.vue";
 import MonitorControls from "../components/MonitorControls.vue";
 import AudioSettings from "../components/AudioSettings.vue";
-import AudioControls from "../components/AudioControls.vue";
 import { useRmeStore } from "../stores/rmeStore";
 
 const rmeStore = useRmeStore();
