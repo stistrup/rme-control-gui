@@ -1,4 +1,4 @@
-import { InputType, RmeInput } from "./rmePlugin.types";
+import { InputType, RmeInput } from "./rmeService.types";
 
 export interface MixerChannelBase {
   name: string;

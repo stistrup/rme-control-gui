@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<FaderProps>(), {
   step: 1,
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["newValue"]);
 
 const localValue = ref(props.modelValue);
 const isDragging = ref(false);
@@ -56,7 +56,7 @@ function drag(event: MouseEvent) {
   newValue = Math.round(newValue / props.step) * props.step;
 
   localValue.value = newValue;
-  emit("update:modelValue", newValue);
+  emit("newValue", newValue);
 }
 
 function stopDrag() {

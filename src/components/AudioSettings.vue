@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useRmeStore } from "../stores/rmeStore";
 import { inject, ref, computed } from "vue";
-import { RmePlugin } from "../plugins/RmePlugin";
+import { RmeService } from "../services/RmeService";
 
 const rmeStore = useRmeStore();
-const rmePlugin = inject<RmePlugin>("RmePlugin");
+const rmePlugin = inject<RmeService>("RmeService");
 const bufferSize = ref(256); // Default value
 
 if (!rmePlugin) {

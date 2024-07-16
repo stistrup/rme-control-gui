@@ -1,4 +1,4 @@
-import { InputType, RmeInput } from "../types/rmePlugin.types";
+import { InputType, RmeInput } from "../types/rmeService.types";
 import { MixerChannel } from "../types/rmeStore.types";
 
 export const mixerChannelsPro: MixerChannel[] = [

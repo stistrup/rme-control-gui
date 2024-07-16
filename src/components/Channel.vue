@@ -2,8 +2,8 @@
 import { computed, inject, onMounted, ref, watch, watchEffect } from "vue";
 import Fader from "./Fader.vue";
 import Knob from "./Knob.vue";
-import { RmePlugin } from "../plugins/RmePlugin";
-import { InputType } from "../types/rmePlugin.types";
+import { RmeService } from "../services/RmeService";
+import { InputType, RmeOutput } from "../types/rmeService.types";
 import { useRmeStore } from "../stores/rmeStore";
 import { MixerChannel } from "../types/rmeStore.types";
 import { alsaConfig, lineSensitivity } from "../config/alsaConfig";
@@ -14,53 +14,91 @@ interface ChannelProps {
 
 const props = defineProps<ChannelProps>();
 
-const INPUT_GAIN_RANGE = props.channel.inputType === InputType.MIC ? 78 : 20;
+const SEND_LEVEL_RANGE = 100; // Assuming a 0-100 range for send levels
+
+const rmeService = inject<RmeService>("RmeService");
+const rmeStore = useRmeStore();
+const mainSendLevel = ref(0);
+const headphonesSendLevel = ref(0);
 
 const hasPhantomSupport = computed(() => {
   const alsaEntry = alsaConfig.inputs.find(
     (entry) => entry.input === props.channel.input
   );
 
-  if (alsaEntry?.controls.phantom) return true;
-  return false;
+  return !!alsaEntry?.controls.phantom;
 });
 const phantomOn = ref(false);
 const currentLineSens = ref<string | null>(null);
-const isHeadphones = ref(false);
 
-const rmePlugin = inject<RmePlugin>("RmePlugin");
-const rmeStore = useRmeStore();
-const gain = ref(0);
-
-if (!rmePlugin) {
-  throw new Error("Could not load rme plugin");
+if (!rmeService) {
+  throw new Error("Could not load RME service");
 }
 
-const handleGainInput = (newValue: number) => {
-  const floatValue = newValue / INPUT_GAIN_RANGE;
-  rmePlugin.setGain(props.channel.pipewirePortName, floatValue);
+const handleMainSendLevel = (newValue: number) => {
+  const floatValue = newValue / SEND_LEVEL_RANGE;
+  console.log("YOYOY?");
+  rmeService
+    .setSendLevel(props.channel, RmeOutput.MONITORS, floatValue)
+    .catch((error) => console.error("Failed to set main send level:", error));
+};
+
+const handleHeadphonesSendLevel = (newValue: number) => {
+  const floatValue = newValue / SEND_LEVEL_RANGE;
+  rmeService
+    .setSendLevel(props.channel, RmeOutput.HEADPHONES, floatValue)
+    .catch((error) =>
+      console.error("Failed to set headphones send level:", error)
+    );
 };
 
 watchEffect(() => {
-  console.log(props.channel.name, "gain value:", gain.value);
+  console.log(props.channel.name, "main send level:", mainSendLevel.value);
+  console.log(
+    props.channel.name,
+    "headphones send level:",
+    headphonesSendLevel.value
+  );
 });
 
-const toggleOutput = () => {
-  isHeadphones.value = !isHeadphones.value;
+const getMainSendLevel = async () => {
+  try {
+    const levels = await rmeService.getSendLevel(
+      props.channel,
+      RmeOutput.MONITORS
+    );
+
+    if (levels) {
+      const avarage = (levels.left + levels.right) / 2;
+      mainSendLevel.value = avarage * SEND_LEVEL_RANGE;
+      console.log("Monitor level for", props.channel.name, "is", avarage);
+    }
+  } catch (error) {
+    console.error("Failed to get main send level:", error);
+  }
 };
 
-const getGain = async () => {
-  if (rmeStore.activeProfile !== rmeStore.profileProAudio) return;
-  const initialGainFloat = (await rmePlugin.getGain(
-    props.channel.pipewirePortName
-  )) as number;
-  gain.value = initialGainFloat * INPUT_GAIN_RANGE;
+const getHeadphonesSendLevel = async () => {
+  try {
+    const levels = await rmeService.getSendLevel(
+      props.channel,
+      RmeOutput.HEADPHONES
+    );
+    if (levels) {
+      const avarage = (levels.left + levels.right) / 2;
+      headphonesSendLevel.value = avarage * SEND_LEVEL_RANGE;
+
+      console.log("Headphones level for", props.channel.name, "is", avarage);
+    }
+  } catch (error) {
+    console.error("Failed to get headphones send level:", error);
+  }
 };
 
 const handlePhantom = async () => {
   if (props.channel.inputType !== InputType.MIC) return;
   const newState = !phantomOn.value;
-  const result = await rmePlugin.setPhantomPower(props.channel, newState);
+  const result = await rmeService.setPhantomPower(props.channel, newState);
 
   if (result) {
     phantomOn.value = newState;
@@ -68,7 +106,7 @@ const handlePhantom = async () => {
 };
 
 const handleLineSens = async (newSens: string) => {
-  const result = await rmePlugin.setLineSensitivity(props.channel, newSens);
+  const result = await rmeService.setLineSensitivity(props.channel, newSens);
   if (result) {
     currentLineSens.value = newSens;
   }
@@ -76,15 +114,16 @@ const handleLineSens = async (newSens: string) => {
 
 const getPhantom = async () => {
   if (props.channel.inputType === InputType.MIC) {
-    const phantomState = await rmePlugin.getPhantomState(props.channel);
+    const phantomState = await rmeService.getPhantomState(props.channel);
     if (phantomState) {
       phantomOn.value = phantomState;
     }
   }
 };
+
 const getSensitivity = async () => {
   if (props.channel.inputType === InputType.LINE) {
-    const newSens = await rmePlugin.getLineSensitivity(props.channel);
+    const newSens = await rmeService.getLineSensitivity(props.channel);
     if (newSens) {
       currentLineSens.value = newSens;
     }
@@ -94,11 +133,13 @@ const getSensitivity = async () => {
 onMounted(async () => {
   getSensitivity();
   getPhantom();
-  getGain();
+  getMainSendLevel();
+  getHeadphonesSendLevel();
   watch(
     () => rmeStore.activeProfile,
     async () => {
-      getGain();
+      getMainSendLevel();
+      getHeadphonesSendLevel();
     }
   );
 });
@@ -108,17 +149,21 @@ onMounted(async () => {
   <div :class="$style.channelContainer">
     <p :class="$style.label">{{ channel.name }}</p>
     <Knob
-      label="gain"
-      :model-value="gain"
+      label="HP Send"
+      :model-value="headphonesSendLevel"
       :min="0"
-      :max="INPUT_GAIN_RANGE"
+      :max="SEND_LEVEL_RANGE"
       :step="1"
-      @newValue="handleGainInput"
+      @newValue="handleHeadphonesSendLevel"
     />
-    <button @click="toggleOutput" :class="$style.outputToggle">
-      {{ isHeadphones ? "Headphones" : "Monitors" }}
-    </button>
-    <Fader label="volume" :model-value="0" />
+    <Fader
+      label="Main Send"
+      :model-value="mainSendLevel"
+      :min="0"
+      :max="SEND_LEVEL_RANGE"
+      :step="1"
+      @newValue="handleMainSendLevel"
+    />
     <button
       v-if="hasPhantomSupport"
       :class="[$style.phantomButton, { [$style.phantomActive]: phantomOn }]"

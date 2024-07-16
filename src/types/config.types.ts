@@ -1,7 +1,8 @@
-import { RmeInput } from "./rmePlugin.types";
+import { RmeInput, RmeOutput } from "./rmeService.types";
 
 export interface StereoOutput {
   displayName: string;
+  output: RmeOutput;
   alsaNameLeft: string;
   alsaNameRight: string;
 }
@@ -19,7 +20,7 @@ export interface Input {
 export interface AlsaConfig {
   outputs: StereoOutput[];
   inputs: Input[];
-  playback: StereoOutput[];
+  playback: Omit<StereoOutput, "output">[];
 }
 
 export interface PipewireConfig {

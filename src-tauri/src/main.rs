@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use tauri::Manager;
 
 #[tauri::command]
-fn find_sound_card_number(sound_card_name: String) -> Result<u32, String> {
-    alsa_control::find_sound_card_number(&sound_card_name)
+fn find_sound_card_number(card_name: String) -> Result<u32, String> {
+    alsa_control::find_sound_card_number(&card_name)
 }
 
 #[tauri::command]
@@ -25,22 +25,32 @@ fn set_volume(control_name: String, volume: i32) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn set_channel_send_level(card_name: &str, channel: &str, destination: &str, level: f32) -> Result<(), String> {
+    alsa_control::set_channel_send_level(card_name, channel, destination, level)
+}
+
+#[tauri::command]
+fn get_channel_send_level(card_name: &str, channel: &str, destination: &str) -> Result<f32, String> {
+    alsa_control::get_channel_send_level(card_name, channel, destination)
+}
+
+#[tauri::command]
 fn set_phantom_power(mic_alsa_name: String, new_state: bool) -> Result<(), String> {
     alsa_control::set_phantom_power(&mic_alsa_name, new_state)
 }
 #[tauri::command]
-fn get_phantom_power_state(sound_card_name: String, mic_alsa_name: String) -> Result<bool, String> {
-    alsa_control::get_phantom_power_state(&sound_card_name, &mic_alsa_name)
+fn get_phantom_power_state(card_name: String, mic_alsa_name: String) -> Result<bool, String> {
+    alsa_control::get_phantom_power_state(&card_name, &mic_alsa_name)
 }
 
 #[tauri::command]
-fn get_line_input_sensitivity(sound_card_name: String, line_input_name: String) -> Result<String, String> {
-    alsa_control::get_line_input_sensitivity(&sound_card_name, &line_input_name)
+fn get_line_input_sensitivity(card_name: String, line_input_name: String) -> Result<String, String> {
+    alsa_control::get_line_input_sensitivity(&card_name, &line_input_name)
 }
 
 #[tauri::command]
-fn set_line_input_sensitivity(sound_card_name: String, line_input_name: String, sensitivity: String) -> Result<(), String> {
-    alsa_control::set_line_input_sensitivity(&sound_card_name, &line_input_name, &sensitivity)
+fn set_line_input_sensitivity(card_name: String, line_input_name: String, sensitivity: String) -> Result<(), String> {
+    alsa_control::set_line_input_sensitivity(&card_name, &line_input_name, &sensitivity)
 }
 
 #[derive(Serialize)]
@@ -110,6 +120,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             change_buffer_size,
             find_sound_card_number,
+            get_channel_send_level,
             get_initial_states,
             get_line_input_sensitivity,
             get_phantom_power_state,
@@ -118,6 +129,7 @@ fn main() {
             get_pipewire_profiles,
             get_soundcard_controls,
             set_buffer_size,
+            set_channel_send_level,
             set_line_input_sensitivity,
             set_phantom_power,
             set_pipewire_gain,

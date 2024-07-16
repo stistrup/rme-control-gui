@@ -1,19 +1,13 @@
 <script setup lang="ts">
-import { inject, onMounted, ref, watchEffect } from "vue";
+import { inject, onMounted, ref } from "vue";
 import Knob from "./Knob.vue";
-// import {
-//   getInitialStates,
-//   setHeadphonesVolume,
-//   setMonitorVolume,
-// } from "../utils/rmeUtils";
-import { useRmeStore } from "../stores/rmeStore";
-import { RmePlugin } from "../plugins/RmePlugin";
-import { RmeOutput } from "../types/rmePlugin.types";
+import { RmeService } from "../services/RmeService";
+import { RmeOutput } from "../types/rmeService.types";
 
 // const rmeStore = useRmeStore();
-const rmePlugin = inject<RmePlugin>("RmePlugin");
+const rmePlugin = inject<RmeService>("RmeService");
 if (!rmePlugin) {
-  throw new Error("Could not inject RME plugin");
+  throw new Error("Could not inject RME service");
 }
 
 const monitorVolume = ref(0);

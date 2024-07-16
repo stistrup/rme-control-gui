@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { inject, onMounted, watch } from "vue";
 import HomeView from "./views/HomeView.vue";
-import { RmePlugin } from "./plugins/RmePlugin.ts";
+import { RmeService } from "./services/RmeService.ts";
 import { useRmeStore } from "./stores/rmeStore.ts";
 
 // Card must match name in aplay -l
-const rmePlugin = inject<RmePlugin>("RmePlugin");
+const rmePlugin = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore();
 
 if (!rmePlugin) {

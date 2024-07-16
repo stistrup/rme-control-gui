@@ -7,30 +7,34 @@ import {
   RmeOutput,
   InitialStates,
   InputType,
-} from "../types/rmePlugin.types";
+} from "../types/rmeService.types";
 import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
 import { MixerChannel } from "../types/rmeStore.types";
 
-export class RmePlugin {
+export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
   private config: AlsaConfig = alsaConfig;
-  private alsaName = "Babyface Pro";
-  private pipewireName = "RME_Babyface_Pro";
+  private alsaCardName = "Babyface Pro";
+  private pipewireCardName = "RME_Babyface_Pro";
 
   constructor() {
     this.store = useRmeStore();
   }
 
+  private getAlsaInputEntry(channelInput: RmeInput) {
+    return alsaConfig.inputs.find((input) => input.input === channelInput);
+  }
+
   public getCurrentStates = async () => {
     try {
       const rawControls = (await invoke("get_soundcard_controls", {
-        cardName: this.alsaName,
+        cardName: this.alsaCardName,
       })) as Record<string, string[]>;
       const formattedControls = formatControls(rawControls);
       this.store.setControls(formattedControls);
 
-      const soundCardNumber = await this.findSoundCardNumber(this.alsaName);
+      const soundCardNumber = await this.findSoundCardNumber(this.alsaCardName);
       if (soundCardNumber) {
         this.store.setSoundcardNumber(soundCardNumber);
       }
@@ -53,10 +57,10 @@ export class RmePlugin {
     }
   };
 
-  public findSoundCardNumber = async (soundCardName: string) => {
+  public findSoundCardNumber = async (cardName: string) => {
     try {
       const cardNumber = await invoke("find_sound_card_number", {
-        soundCardName,
+        cardName,
       });
 
       console.log(typeof cardNumber);
@@ -70,7 +74,7 @@ export class RmePlugin {
   private getActiveProfile = async () => {
     try {
       const activeProfile = await invoke("get_pipewire_active_profile", {
-        cardName: this.pipewireName,
+        cardName: this.pipewireCardName,
       });
       console.log("Active profile retrieved:", activeProfile);
       return activeProfile as string;
@@ -84,11 +88,36 @@ export class RmePlugin {
     return this.store.alsaControls[name];
   };
 
-  public getGain = async (portName: string) => {
+  public getSendLevel = async (channel: MixerChannel, output: RmeOutput) => {
+    const alsaEntry = this.getAlsaInputEntry(channel.input);
+    if (!alsaEntry)
+      throw new Error(`No ALSA entry found for channel ${channel.name}`);
+
+    const alsaOutput = alsaConfig.outputs.find((out) => out.output === output);
+
+    if (!alsaOutput) {
+      console.error("Alsa configuration not properly set up");
+      return;
+    }
+
     try {
-      return await invoke("get_pipewire_gain", { portName });
+      const left = (await invoke("get_channel_send_level", {
+        cardName: this.alsaCardName,
+        channel: alsaEntry.alsaName,
+        destination: alsaOutput.alsaNameLeft,
+      })) as number;
+      const right = (await invoke("get_channel_send_level", {
+        cardName: this.alsaCardName,
+        channel: alsaEntry.alsaName,
+        destination: alsaOutput.alsaNameRight,
+      })) as number;
+
+      return { left, right };
     } catch (error) {
-      console.error("failed to fetch gain:", error);
+      console.error(
+        `Failed to fetch ${RmeOutput[output]} send level for ${channel.name}:`,
+        error
+      );
       throw error;
     }
   };
@@ -104,7 +133,7 @@ export class RmePlugin {
 
     try {
       const phantomState = (await invoke("get_phantom_power_state", {
-        soundCardName: this.alsaName,
+        cardName: this.alsaCardName,
         micAlsaName: fullName,
       })) as boolean;
       console.log("Phantom state for", phantomState);
@@ -126,7 +155,7 @@ export class RmePlugin {
 
     try {
       const sensitivity = (await invoke("get_line_input_sensitivity", {
-        soundCardName: this.alsaName,
+        cardName: this.alsaCardName,
         lineInputName: fullName,
       })) as string;
       console.log("sensitivity for", channel.name, "is", sensitivity);
@@ -151,7 +180,7 @@ export class RmePlugin {
   private getSoundCardProfiles = async () => {
     try {
       const profiles = await invoke("get_pipewire_profiles", {
-        cardName: this.pipewireName,
+        cardName: this.pipewireCardName,
       });
       return profiles as string[];
     } catch (error) {
@@ -209,7 +238,7 @@ export class RmePlugin {
 
     try {
       await invoke("set_line_input_sensitivity", {
-        soundCardName: this.alsaName,
+        cardName: this.alsaCardName,
         lineInputName: fullAlsaName,
         sensitivity: newSens,
       });
@@ -253,7 +282,7 @@ export class RmePlugin {
   public setPipewireProfile = async (profile: string) => {
     try {
       await invoke("set_pipewire_profile", {
-        cardName: this.pipewireName,
+        cardName: this.pipewireCardName,
         profile,
       });
 
@@ -277,13 +306,47 @@ export class RmePlugin {
     await this.setVolume(controlName, volume);
   };
 
-  public setGain = async (portName: string, gain: number) => {
-    if (gain < 0 || gain > 1) {
-      console.warn("Volume out of range, will be clamped within 0 - 1");
+  public setSendLevel = async (
+    channel: MixerChannel,
+    output: RmeOutput,
+    level: number
+  ) => {
+    if (level < 0 || level > 1) {
+      console.warn("Send level out of range, will be clamped within 0 - 1");
     }
-    invoke("set_pipewire_gain", { portName, gain });
-  };
 
+    const alsaEntry = this.getAlsaInputEntry(channel.input);
+    if (!alsaEntry)
+      throw new Error(`No ALSA entry found for channel ${channel.name}`);
+
+    const alsaOutput = alsaConfig.outputs.find((out) => out.output === output);
+
+    if (!alsaOutput) {
+      console.error("Alsa configuration not properly set up");
+      return;
+    }
+
+    try {
+      await invoke("set_channel_send_level", {
+        cardName: this.alsaCardName,
+        channel: alsaEntry.alsaName,
+        destination: alsaOutput.alsaNameLeft,
+        level,
+      });
+      await invoke("set_channel_send_level", {
+        cardName: this.alsaCardName,
+        channel: alsaEntry.alsaName,
+        destination: alsaOutput.alsaNameRight,
+        level,
+      });
+    } catch (error) {
+      console.error(
+        `Failed to set ${RmeOutput[output]} send level for ${channel.name}:`,
+        error
+      );
+      throw error;
+    }
+  };
   public setMonitorVolume = async (destination: RmeOutput, volume: number) => {
     if (!this.config) {
       console.error("RmePlugin not initialized");
@@ -332,6 +395,6 @@ export class RmePlugin {
 
 export default {
   install: (app: App) => {
-    app.provide("RmePlugin", new RmePlugin());
+    app.provide("RmeService", new RmeService());
   },
 };
