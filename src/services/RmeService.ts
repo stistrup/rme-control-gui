@@ -9,12 +9,7 @@ import {
   InputType,
   RmeReturn,
 } from "../types/rmeService.types";
-import {
-  AlsaConfig,
-  MonoInput,
-  StereoOutput,
-  StereoReturn,
-} from "../types/config.types";
+import { AlsaConfig } from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
 import { MixerChannel } from "../types/rmeStore.types";
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch, watchEffect } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 import Fader from "./Fader.vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
