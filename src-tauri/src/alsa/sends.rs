@@ -10,9 +10,6 @@ pub fn set_channel_send_level(card_name: &str, channel: &str, destination: &str,
     // Construct the control name using both channel and destination
     let control_name = format!("{}-{}", channel, destination);
 
-    println!(
-        "-c {} set {} {}", card_name, control_name, clamped_level);
-
     let output = Command::new("amixer")
         .args(&[
             "-c", &card_index,

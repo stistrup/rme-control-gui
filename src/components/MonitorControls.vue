@@ -3,6 +3,10 @@ import { inject, onMounted, ref } from "vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
 import { RmeOutput } from "../types/rmeService.types";
+import {
+  applyExponentialCurve,
+  removeExponentialCurve,
+} from "../utils/logConvertion";
 
 const rmeService = inject<RmeService>("RmeService");
 if (!rmeService) {
@@ -13,11 +17,15 @@ const monitorVolume = ref(0);
 const headphonesVolume = ref(0);
 
 const handleMonitor = (volume: number) => {
-  rmeService.setMonitorVolume(RmeOutput.MONITORS, volume);
+  const monitorExpFloat = applyExponentialCurve(volume / 100);
+  const monitorExp = Math.floor(monitorExpFloat * 100);
+  rmeService.setMonitorVolume(RmeOutput.MONITORS, monitorExp);
 };
 
 const handleHeadphones = (volume: number) => {
-  rmeService.setMonitorVolume(RmeOutput.HEADPHONES, volume);
+  const hpLinearFloat = applyExponentialCurve(volume / 100);
+  const hpLinear = Math.floor(hpLinearFloat * 100);
+  rmeService.setMonitorVolume(RmeOutput.HEADPHONES, hpLinear);
 };
 
 onMounted(async () => {
@@ -29,11 +37,10 @@ onMounted(async () => {
   const monitorAvarage = (monitor.left + monitor.right) / 2;
   const hpAvarage = (hp.left + hp.right) / 2;
 
-  console.log(monitorAvarage);
-  console.log(hpAvarage);
-
-  monitorVolume.value = monitorAvarage;
-  headphonesVolume.value = hpAvarage;
+  const monitorLinear = removeExponentialCurve(monitorAvarage / 100);
+  const hpLinear = removeExponentialCurve(hpAvarage / 100);
+  monitorVolume.value = monitorLinear * 100;
+  headphonesVolume.value = hpLinear * 100;
 });
 </script>
 

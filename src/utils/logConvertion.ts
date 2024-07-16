@@ -1,52 +1,27 @@
 /**
- * Convert a linear value to a logarithmic scale.
- * @param value The current value in the linear scale.
- * @param min The minimum value of the range.
- * @param max The maximum value of the range.
- * @returns The converted value in logarithmic scale.
+ * Apply an exponential curve to a normalized value.
+ * @param value The input value, normalized between 0 and 1.
+ * @param exponent The exponent to use for the curve (default is 2).
+ * @returns The output value, still between 0 and 1, but on an exponential curve.
  */
-export function linearToLogarithmic(
+export function applyExponentialCurve(
   value: number,
-  min: number,
-  max: number
+  exponent: number = 2
 ): number {
-  // Ensure the value is within the range
-  const clampedValue = Math.max(min, Math.min(max, value));
-
-  // Normalize the value to a 0-1 range
-  const normalizedValue = (clampedValue - min) / (max - min);
-
-  // Convert to logarithmic scale
-  // We add a small number (1e-6) to avoid taking log of 0
-  const logValue = Math.log(normalizedValue + 1e-6);
-  const minLog = Math.log(1e-6);
-  const maxLog = Math.log(1 + 1e-6);
-
-  // Normalize the logarithmic value back to the original range
-  return min + ((max - min) * (logValue - minLog)) / (maxLog - minLog);
+  // Apply the exponential curve
+  return Math.pow(value, exponent);
 }
 
 /**
- * Convert a logarithmic value back to a linear scale.
- * @param value The current value in the logarithmic scale.
- * @param min The minimum value of the range.
- * @param max The maximum value of the range.
- * @returns The converted value in linear scale.
+ * Inverse of applyExponentialCurve. Converts a value from the exponential curve back to linear.
+ * @param value The input value on the exponential curve, between 0 and 1.
+ * @param exponent The exponent used for the curve (default is 2).
+ * @returns The output value, linearized between 0 and 1.
  */
-export function logarithmicToLinear(
+export function removeExponentialCurve(
   value: number,
-  min: number,
-  max: number
+  exponent: number = 2
 ): number {
-  // Normalize the value to a 0-1 range
-  const normalizedValue = (value - min) / (max - min);
-
-  // Convert from logarithmic scale
-  const minLog = Math.log(1e-6);
-  const maxLog = Math.log(1 + 1e-6);
-  const expValue =
-    Math.exp(minLog + normalizedValue * (maxLog - minLog)) - 1e-6;
-
-  // Denormalize back to the original range
-  return min + expValue * (max - min);
+  // Apply the inverse of the exponential curve
+  return Math.pow(value, 1 / exponent);
 }

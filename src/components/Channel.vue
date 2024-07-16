@@ -7,6 +7,10 @@ import { InputType, RmeOutput } from "../types/rmeService.types";
 import { useRmeStore } from "../stores/rmeStore";
 import { MixerChannel } from "../types/rmeStore.types";
 import { alsaConfig, lineSensitivity } from "../config/alsaConfig";
+import {
+  applyExponentialCurve,
+  removeExponentialCurve,
+} from "../utils/logConvertion";
 
 interface ChannelProps {
   channel: MixerChannel;
@@ -14,7 +18,7 @@ interface ChannelProps {
 
 const props = defineProps<ChannelProps>();
 
-const SEND_LEVEL_RANGE = 100; // Assuming a 0-100 range for send levels
+const VISUAL_RANGE_MULTIPLIER = 100;
 
 const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore();
@@ -36,29 +40,22 @@ if (!rmeService) {
 }
 
 const handleMainSendLevel = (newValue: number) => {
-  const floatValue = newValue / SEND_LEVEL_RANGE;
+  const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
+  const floatValueExp = applyExponentialCurve(floatValue);
   rmeService
-    .setSendLevel(props.channel, RmeOutput.MONITORS, floatValue)
+    .setSendLevel(props.channel, RmeOutput.MONITORS, floatValueExp)
     .catch((error) => console.error("Failed to set main send level:", error));
 };
 
 const handleHeadphonesSendLevel = (newValue: number) => {
-  const floatValue = newValue / SEND_LEVEL_RANGE;
+  const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
+  const floatValueExp = applyExponentialCurve(floatValue);
   rmeService
-    .setSendLevel(props.channel, RmeOutput.HEADPHONES, floatValue)
+    .setSendLevel(props.channel, RmeOutput.HEADPHONES, floatValueExp)
     .catch((error) =>
       console.error("Failed to set headphones send level:", error)
     );
 };
-
-watchEffect(() => {
-  console.log(props.channel.name, "main send level:", mainSendLevel.value);
-  console.log(
-    props.channel.name,
-    "headphones send level:",
-    headphonesSendLevel.value
-  );
-});
 
 const getMainSendLevel = async () => {
   try {
@@ -69,8 +66,8 @@ const getMainSendLevel = async () => {
 
     if (levels) {
       const avarage = (levels.left + levels.right) / 2;
-      mainSendLevel.value = avarage * SEND_LEVEL_RANGE;
-      console.log("Monitor level for", props.channel.name, "is", avarage);
+      const avarageLinear = removeExponentialCurve(avarage);
+      mainSendLevel.value = avarageLinear * VISUAL_RANGE_MULTIPLIER;
     }
   } catch (error) {
     console.error("Failed to get main send level:", error);
@@ -85,9 +82,8 @@ const getHeadphonesSendLevel = async () => {
     );
     if (levels) {
       const avarage = (levels.left + levels.right) / 2;
-      headphonesSendLevel.value = avarage * SEND_LEVEL_RANGE;
-
-      console.log("Headphones level for", props.channel.name, "is", avarage);
+      const avarageLinear = removeExponentialCurve(avarage);
+      headphonesSendLevel.value = avarageLinear * VISUAL_RANGE_MULTIPLIER;
     }
   } catch (error) {
     console.error("Failed to get headphones send level:", error);
@@ -151,7 +147,7 @@ onMounted(async () => {
       label="HP Send"
       :model-value="headphonesSendLevel"
       :min="0"
-      :max="SEND_LEVEL_RANGE"
+      :max="VISUAL_RANGE_MULTIPLIER"
       :step="1"
       @newValue="handleHeadphonesSendLevel"
     />
@@ -159,7 +155,7 @@ onMounted(async () => {
       label="Main Send"
       :model-value="mainSendLevel"
       :min="0"
-      :max="SEND_LEVEL_RANGE"
+      :max="VISUAL_RANGE_MULTIPLIER"
       :step="1"
       @newValue="handleMainSendLevel"
     />
