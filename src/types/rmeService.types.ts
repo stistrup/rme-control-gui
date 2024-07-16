@@ -7,15 +7,19 @@ export enum RmeInput {
   CAPTRUE_R,
 }
 
+export enum RmeOutput {
+  MONITORS,
+  HEADPHONES,
+}
+
+export enum RmeReturn {
+  PLAYBACK,
+}
+
 export enum InputType {
   MIC,
   LINE,
   GENERAL,
-}
-
-export enum RmeOutput {
-  MONITORS,
-  HEADPHONES,
 }
 
 export enum RmeControl {

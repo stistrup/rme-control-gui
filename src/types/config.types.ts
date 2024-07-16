@@ -1,15 +1,22 @@
-import { RmeInput, RmeOutput } from "./rmeService.types";
+import { RmeInput, RmeOutput, RmeReturn } from "./rmeService.types";
 
 export interface StereoOutput {
   displayName: string;
-  output: RmeOutput;
+  id: RmeOutput;
   alsaNameLeft: string;
   alsaNameRight: string;
 }
 
-export interface Input {
+export interface StereoReturn {
+  displayName: string;
+  id: RmeReturn;
+  alsaNameLeft: string;
+  alsaNameRight: string;
+}
+
+export interface MonoInput {
   alsaName: string;
-  input: RmeInput;
+  id: RmeInput;
   displayName: string;
   controls: {
     phantom?: string;
@@ -19,8 +26,8 @@ export interface Input {
 
 export interface AlsaConfig {
   outputs: StereoOutput[];
-  inputs: Input[];
-  playback: Omit<StereoOutput, "output">[];
+  inputs: MonoInput[];
+  playback: StereoReturn[];
 }
 
 export interface PipewireConfig {

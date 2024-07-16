@@ -7,8 +7,14 @@ import {
   RmeOutput,
   InitialStates,
   InputType,
+  RmeReturn,
 } from "../types/rmeService.types";
-import { AlsaConfig } from "../types/config.types";
+import {
+  AlsaConfig,
+  MonoInput,
+  StereoOutput,
+  StereoReturn,
+} from "../types/config.types";
 import { alsaConfig } from "../config/alsaConfig";
 import { MixerChannel } from "../types/rmeStore.types";
 
@@ -22,8 +28,8 @@ export class RmeService {
     this.store = useRmeStore();
   }
 
-  private getAlsaInputEntry(channelInput: RmeInput) {
-    return alsaConfig.inputs.find((input) => input.input === channelInput);
+  private getAlsaInputEntry(channel: RmeInput | RmeOutput | RmeReturn) {
+    return alsaConfig.inputs.find((input) => input.id === channel);
   }
 
   public getCurrentStates = async () => {
@@ -93,7 +99,7 @@ export class RmeService {
     if (!alsaEntry)
       throw new Error(`No ALSA entry found for channel ${channel.name}`);
 
-    const alsaOutput = alsaConfig.outputs.find((out) => out.output === output);
+    const alsaOutput = alsaConfig.outputs.find((out) => out.id === output);
 
     if (!alsaOutput) {
       console.error("Alsa configuration not properly set up");
@@ -124,7 +130,7 @@ export class RmeService {
 
   public getPhantomState = async (channel: MixerChannel) => {
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.input === channel.input
+      (input) => input.id === channel.input
     );
 
     if (!alsaEntry?.controls.phantom) return;
@@ -146,7 +152,7 @@ export class RmeService {
 
   public getLineSensitivity = async (channel: MixerChannel) => {
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.input === channel.input
+      (input) => input.id === channel.input
     );
 
     if (!alsaEntry?.controls.sensitivity) return;
@@ -189,9 +195,36 @@ export class RmeService {
     }
   };
 
-  public getVolume = (controlName: string, channel: string): number => {
-    const control = this.getControl(controlName);
-    return control?.values[channel] || 0;
+  public getOutputVolume = async (target: RmeOutput) => {
+    const alsaEntryTarget = alsaConfig.outputs.find(
+      (entry) => entry.id === target
+    );
+    const alsaEntrySource = alsaConfig.playback.find(
+      (entry) => entry.id === RmeReturn.PLAYBACK
+    );
+
+    if (!alsaEntryTarget || !alsaEntrySource) {
+      console.error("Alsa entry not configured");
+      return;
+    }
+
+    const fullAlsaNameLeft = `${alsaEntrySource.alsaNameLeft}-${alsaEntryTarget.alsaNameLeft}`;
+    const fullAlsaNameRight = `${alsaEntrySource.alsaNameRight}-${alsaEntryTarget.alsaNameRight}`;
+
+    try {
+      const left = (await invoke("get_alsa_volume", {
+        cardName: this.alsaCardName,
+        controlName: fullAlsaNameLeft,
+      })) as number;
+      const right = (await invoke("get_alsa_volume", {
+        cardName: this.alsaCardName,
+        controlName: fullAlsaNameRight,
+      })) as number;
+      return { left, right };
+    } catch (error) {
+      console.error("Failed to output volume:", error);
+      throw error;
+    }
   };
 
   public setBufferSize = async (bufferSize: number) => {
@@ -226,7 +259,7 @@ export class RmeService {
     }
 
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.input === channel.input
+      (input) => input.id === channel.input
     );
 
     if (!alsaEntry?.controls.sensitivity) {
@@ -256,7 +289,7 @@ export class RmeService {
     }
 
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.input === channel.input
+      (input) => input.id === channel.input
     );
 
     if (!alsaEntry?.controls.phantom) {
@@ -268,6 +301,7 @@ export class RmeService {
 
     try {
       await invoke("set_phantom_power", {
+        cardName: this.alsaCardName,
         micAlsaName: fullAlsaName,
         newState: newState,
       });
@@ -319,7 +353,7 @@ export class RmeService {
     if (!alsaEntry)
       throw new Error(`No ALSA entry found for channel ${channel.name}`);
 
-    const alsaOutput = alsaConfig.outputs.find((out) => out.output === output);
+    const alsaOutput = alsaConfig.outputs.find((out) => out.id === output);
 
     if (!alsaOutput) {
       console.error("Alsa configuration not properly set up");
@@ -384,9 +418,12 @@ export class RmeService {
       return;
     }
 
-    const cardNumber = this.store.soundCardNumber;
     try {
-      await invoke("set_volume", { cardNumber, controlName, volume });
+      await invoke("set_alsa_volume", {
+        cardName: this.alsaCardName,
+        controlName,
+        volume,
+      });
     } catch (error) {
       console.error(`Error setting volume for ${controlName}:`, error);
     }

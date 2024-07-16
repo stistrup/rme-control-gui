@@ -4,9 +4,8 @@ import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
 import { RmeOutput } from "../types/rmeService.types";
 
-// const rmeStore = useRmeStore();
-const rmePlugin = inject<RmeService>("RmeService");
-if (!rmePlugin) {
+const rmeService = inject<RmeService>("RmeService");
+if (!rmeService) {
   throw new Error("Could not inject RME service");
 }
 
@@ -14,20 +13,27 @@ const monitorVolume = ref(0);
 const headphonesVolume = ref(0);
 
 const handleMonitor = (volume: number) => {
-  rmePlugin.setMonitorVolume(RmeOutput.MONITORS, volume);
+  rmeService.setMonitorVolume(RmeOutput.MONITORS, volume);
 };
 
 const handleHeadphones = (volume: number) => {
-  rmePlugin.setMonitorVolume(RmeOutput.HEADPHONES, volume);
+  rmeService.setMonitorVolume(RmeOutput.HEADPHONES, volume);
 };
 
 onMounted(async () => {
-  const initialStates = await rmePlugin.getInitialStates();
+  const monitor = await rmeService.getOutputVolume(RmeOutput.MONITORS);
+  const hp = await rmeService.getOutputVolume(RmeOutput.HEADPHONES);
 
-  if (initialStates) {
-    monitorVolume.value = initialStates.monitors_volume;
-    headphonesVolume.value = initialStates.headphones_volume;
-  }
+  if (!hp || !monitor) return;
+
+  const monitorAvarage = (monitor.left + monitor.right) / 2;
+  const hpAvarage = (hp.left + hp.right) / 2;
+
+  console.log(monitorAvarage);
+  console.log(hpAvarage);
+
+  monitorVolume.value = monitorAvarage;
+  headphonesVolume.value = hpAvarage;
 });
 </script>
 

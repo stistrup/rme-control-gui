@@ -23,7 +23,7 @@ const headphonesSendLevel = ref(0);
 
 const hasPhantomSupport = computed(() => {
   const alsaEntry = alsaConfig.inputs.find(
-    (entry) => entry.input === props.channel.input
+    (entry) => entry.id === props.channel.input
   );
 
   return !!alsaEntry?.controls.phantom;
@@ -37,7 +37,6 @@ if (!rmeService) {
 
 const handleMainSendLevel = (newValue: number) => {
   const floatValue = newValue / SEND_LEVEL_RANGE;
-  console.log("YOYOY?");
   rmeService
     .setSendLevel(props.channel, RmeOutput.MONITORS, floatValue)
     .catch((error) => console.error("Failed to set main send level:", error));

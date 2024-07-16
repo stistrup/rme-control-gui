@@ -24,8 +24,13 @@ fn find_sound_card_number(card_name: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn set_volume(sound_card_name: String, control_name: String, volume: i32) -> Result<(), String> {
-    alsa::volume::set_volume(&sound_card_name, &control_name, volume)
+fn set_alsa_volume(card_name: String, control_name: String, volume: i32) -> Result<(), String> {
+    alsa::volume::set_volume(&card_name, &control_name, volume)
+}
+
+#[tauri::command]
+fn get_alsa_volume(card_name: String, control_name: String) -> Result<i32, String> {
+    alsa::volume::get_volume(&card_name, &control_name)
 }
 
 #[tauri::command]
@@ -39,8 +44,8 @@ fn get_channel_send_level(card_name: &str, channel: &str, destination: &str) -> 
 }
 
 #[tauri::command]
-fn set_phantom_power(sound_card_name: String, mic_alsa_name: String, new_state: bool) -> Result<(), String> {
-    alsa::switches::set_phantom_power(&sound_card_name, &mic_alsa_name, new_state)
+fn set_phantom_power(card_name: String, mic_alsa_name: String, new_state: bool) -> Result<(), String> {
+    alsa::switches::set_phantom_power(&card_name, &mic_alsa_name, new_state)
 }
 #[tauri::command]
 fn get_phantom_power_state(card_name: String, mic_alsa_name: String) -> Result<bool, String> {
@@ -108,6 +113,7 @@ fn main() {
           })
         .invoke_handler(tauri::generate_handler![
             find_sound_card_number,
+            get_alsa_volume,
             get_channel_send_level,
             get_line_input_sensitivity,
             get_phantom_power_state,
@@ -121,7 +127,7 @@ fn main() {
             set_phantom_power,
             set_pipewire_volume,
             set_pipewire_profile,
-            set_volume,
+            set_alsa_volume,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
