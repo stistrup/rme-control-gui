@@ -1,8 +1,10 @@
 # rme-control-gui
 
-A graphical interface interfacing with ALSA to give easy control to RME soundcard Babyface Pro
+A graphical interface interfacing with ALSA and Pipewire to give easy control to RME soundcard Babyface Pro
 
 Design is really rough around the edges and i have a whole different look in mind but so far i've focused on fucntionality
+
+
 ![image](https://github.com/user-attachments/assets/985ebc1a-e46f-4d50-9327-f98402b89b11)
 
 
