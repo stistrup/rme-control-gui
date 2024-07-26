@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "cross-env WEBKIT_DISABLE_DMABUF_RENDERER=1 tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0-beta.15",
@@ -20,6 +20,7 @@
     "@tauri-apps/cli": ">=2.0.0-beta.0",
     "@types/js-yaml": "^4.0.9",
     "@vitejs/plugin-vue": "^5.0.5",
+    "cross-env": "^7.0.3",
     "typescript": "^5.2.2",
     "vite": "^5.3.1",
     "vue-tsc": "^2.0.22"

@@ -27,7 +27,7 @@ const headphonesSendLevel = ref(0);
 
 const hasPhantomSupport = computed(() => {
   const alsaEntry = alsaConfig.inputs.find(
-    (entry) => entry.id === props.channel.input
+    (entry) => entry.id === props.channel.id
   );
 
   return !!alsaEntry?.controls.phantom;

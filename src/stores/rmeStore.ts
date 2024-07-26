@@ -6,6 +6,7 @@ import { MixerChannel } from "../types/rmeStore.types";
 import {
   mixerChannelsDefault,
   mixerChannelsPro,
+  playbackChannelConfig,
 } from "../config/channelsConfig";
 
 export const useRmeStore = defineStore("rme", () => {
@@ -16,6 +17,7 @@ export const useRmeStore = defineStore("rme", () => {
   const soundCardNumber = ref<number | null>(null);
   const supportedProfiles = ref<string[]>([]);
   const mixerChannels = ref<MixerChannel[]>([]);
+  const playbackChannel = ref<MixerChannel | null>(null);
 
   const isInitialized = ref<boolean | null>(null);
 
@@ -34,6 +36,10 @@ export const useRmeStore = defineStore("rme", () => {
       } else if (profile === pipewireProfiles.default) {
         setMixerChannels(mixerChannelsDefault);
       }
+
+      if (!playbackChannel.value) {
+        setPlaybackChannel(playbackChannelConfig);
+      }
     } else {
       console.warn(`Profile "${profile}" is not supported`);
     }
@@ -50,6 +56,9 @@ export const useRmeStore = defineStore("rme", () => {
 
   const setMixerChannels = (channels: MixerChannel[]) => {
     mixerChannels.value = channels;
+  };
+  const setPlaybackChannel = (channel: MixerChannel) => {
+    playbackChannel.value = channel;
   };
 
   const setSupportedProfiles = (profiles: string[]) => {
@@ -81,6 +90,7 @@ export const useRmeStore = defineStore("rme", () => {
     isInitialized,
     mixerChannels,
     monitorVolume,
+    playbackChannel,
     profileDefault,
     profileProAudio,
     soundCardNumber,
@@ -89,6 +99,7 @@ export const useRmeStore = defineStore("rme", () => {
     setActiveProfile,
     setControls,
     setMixerChannels,
+    setPlaybackChannel,
     setSoundcardNumber,
     setSupportedProfiles,
     updateControl,

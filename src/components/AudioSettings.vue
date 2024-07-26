@@ -81,7 +81,6 @@ const toggleProfile = () => {
 <style module>
 .settingsContainer {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
   padding: 1rem;
   background-color: #f5f5f5;

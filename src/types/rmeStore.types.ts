@@ -1,4 +1,4 @@
-import { InputType, RmeInput } from "./rmeService.types";
+import { InputType, RmeInput, RmeReturn } from "./rmeService.types";
 
 export interface MixerChannelBase {
   name: string;
@@ -8,22 +8,27 @@ export interface MixerChannelBase {
 }
 
 export interface MixerChannelDefault extends MixerChannelBase {
-  input: RmeInput.CAPTRUE_R | RmeInput.CAPTURE_L;
+  id: RmeInput.CAPTRUE_R | RmeInput.CAPTURE_L;
   inputType: InputType.GENERAL;
 }
 
 export interface MixerChannelMic extends MixerChannelBase {
-  input: RmeInput.MIC1 | RmeInput.MIC2;
+  id: RmeInput.MIC1 | RmeInput.MIC2;
   inputType: InputType.MIC;
   gain?: number;
   phantomActive?: boolean;
 }
 
 export interface MixerChannelLine extends MixerChannelBase {
-  input: RmeInput.LINE1 | RmeInput.LINE2;
+  id: RmeInput.LINE1 | RmeInput.LINE2;
   inputType: InputType.LINE;
   gain?: number;
   sens?: MixerLineSens;
+}
+
+export interface MixerChannelPlayback extends MixerChannelBase {
+  id: RmeReturn.PLAYBACK;
+  inputType: InputType.GENERAL;
 }
 
 export enum MixerLineSens {
@@ -34,4 +39,5 @@ export enum MixerLineSens {
 export type MixerChannel =
   | MixerChannelDefault
   | MixerChannelMic
-  | MixerChannelLine;
+  | MixerChannelLine
+  | MixerChannelPlayback;
