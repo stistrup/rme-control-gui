@@ -2,7 +2,7 @@
 
 A graphical interface interfacing with ALSA and Pipewire to give easy control to RME soundcard Babyface Pro
 
-Mostly been focusing on functionality and get stuff working so far so design is far from finished
+A fun little project to learn tauri and rust. Design will most likely look different later but i have some functionality i want to sort out first. 
 
 
 ![image](https://github.com/user-attachments/assets/985ebc1a-e46f-4d50-9327-f98402b89b11)
