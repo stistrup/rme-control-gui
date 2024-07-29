@@ -7,8 +7,13 @@ pub struct AlsaController {
 }
 
 impl AlsaController {
-    pub fn new(card_name: String) -> Self {
-        Self { card_name }
+    pub fn new(card_name: String) -> Result<Self, String> {
+        let card_index = general::find_card_index(&card_name)?;
+        Ok(Self { card_name, card_index })
+    }
+
+    pub fn get_card_index(&self) -> &str {
+        &self.card_index
     }
 }
 
@@ -49,12 +54,12 @@ pub fn set_line_input_sensitivity(state: State<'_, super::super::AppState>, line
 
 #[tauri::command]
 pub fn set_alsa_volume(state: State<'_, super::super::AppState>, control_name: String, volume: i32) -> Result<(), String> {
-    volume::set_volume(&state.alsa.card_name, &control_name, volume)
+    volume::set_volume(&state.alsa.card_index, &control_name, volume)
 }
 
 #[tauri::command]
 pub fn get_alsa_volume(state: State<'_, super::super::AppState>, control_name: String) -> Result<i32, String> {
-    volume::get_volume(&state.alsa.card_name, &control_name)
+    volume::get_volume(&state.alsa.card_index, &control_name)
 }
 
 #[tauri::command]

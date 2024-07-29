@@ -2,8 +2,8 @@ use regex::Regex;
 use std::process::Command;
 use super::general;
 
-pub fn set_volume(sound_card_name: &str, control_name: &str, volume: i32) -> Result<(), String> {
-    let card_index = general::find_card_index(sound_card_name)?;
+pub fn set_volume(card_index: &str, control_name: &str, volume: i32) -> Result<(), String> {
+    let card_index = state.alsa.get_card_index();
 
     // Clamp volume between 0 and 100
     let clamped_volume = volume.clamp(0, 100);
@@ -11,7 +11,7 @@ pub fn set_volume(sound_card_name: &str, control_name: &str, volume: i32) -> Res
     let output = Command::new("amixer")
         .args(&[
             "-c",
-            &card_index,
+            card_index,
             "set",
             control_name,
             &format!("{}%", clamped_volume),
@@ -26,8 +26,7 @@ pub fn set_volume(sound_card_name: &str, control_name: &str, volume: i32) -> Res
     }
 }
 
-pub fn get_volume(sound_card_name: &str, control_name: &str) -> Result<i32, String> {
-    let card_index = general::find_card_index(sound_card_name)?;
+pub fn get_volume(card_index: &str, control_name: &str) -> Result<i32, String> {
 
     let output = Command::new("amixer")
         .args(&["-c", &card_index, "get", control_name])

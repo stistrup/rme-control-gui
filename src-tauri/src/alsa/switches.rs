@@ -1,9 +1,9 @@
 use super::general;
 use std::process::Command;
 
-pub fn set_phantom_power(sound_card_name: &str, mic: &str, new_state: bool) -> Result<(), String> {
-    let card_index = general::find_card_index(sound_card_name)?;
-    
+pub fn set_phantom_power(state: State<'_, AppState>, mic: &str, new_state: bool) -> Result<(), String> {
+    let card_index = state.alsa.get_card_index();
+
     let state = if new_state { "on" } else { "off" };
     
     let output = Command::new("amixer")
@@ -18,8 +18,8 @@ pub fn set_phantom_power(sound_card_name: &str, mic: &str, new_state: bool) -> R
     }
 }
 
-pub fn get_phantom_power_state(sound_card_name: &str, mic_name: &str) -> Result<bool, String> {
-    let card_index = general::find_card_index(sound_card_name)?;
+pub fn get_phantom_power_state(state: State<'_, AppState>, mic_name: &str) -> Result<bool, String> {
+    let card_index = state.alsa.get_card_index();
 
     let output = Command::new("amixer")
         .args(&["-c", &card_index, "get", mic_name])
@@ -50,7 +50,7 @@ pub fn get_phantom_power_state(sound_card_name: &str, mic_name: &str) -> Result<
     }
 }
 
-pub fn get_line_input_sensitivity(sound_card_name: &str, line_input_name: &str) -> Result<String, String> {
+pub fn get_line_input_sensitivity(state: State<'_, AppState>, line_input_name: &str) -> Result<String, String> {
     let card_index = general::find_card_index(sound_card_name)?;
 
     let output = Command::new("amixer")
@@ -84,7 +84,7 @@ pub fn get_line_input_sensitivity(sound_card_name: &str, line_input_name: &str) 
     }
 }
 
-pub fn set_line_input_sensitivity(sound_card_name: &str, line_input_name: &str, sensitivity: &str) -> Result<(), String> {
+pub fn set_line_input_sensitivity(state: State<'_, AppState>, line_input_name: &str, sensitivity: &str) -> Result<(), String> {
     let card_index = general::find_card_index(sound_card_name)?;
 
     let output = Command::new("amixer")
