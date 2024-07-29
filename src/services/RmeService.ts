@@ -90,7 +90,7 @@ export class RmeService {
   };
 
   public getSendLevel = async (channel: MixerChannel, output: RmeOutput) => {
-    const alsaEntry = this.getAlsaInputEntry(channel.input);
+    const alsaEntry = this.getAlsaInputEntry(channel.id);
     if (!alsaEntry)
       throw new Error(`No ALSA entry found for channel ${channel.name}`);
 
@@ -125,7 +125,7 @@ export class RmeService {
 
   public getPhantomState = async (channel: MixerChannel) => {
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.input
+      (input) => input.id === channel.id
     );
 
     if (!alsaEntry?.controls.phantom) return;
@@ -147,7 +147,7 @@ export class RmeService {
 
   public getLineSensitivity = async (channel: MixerChannel) => {
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.input
+      (input) => input.id === channel.id
     );
 
     if (!alsaEntry?.controls.sensitivity) return;
@@ -254,7 +254,7 @@ export class RmeService {
     }
 
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.input
+      (input) => input.id === channel.id
     );
 
     if (!alsaEntry?.controls.sensitivity) {
@@ -284,7 +284,7 @@ export class RmeService {
     }
 
     const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.input
+      (input) => input.id === channel.id
     );
 
     if (!alsaEntry?.controls.phantom) {
@@ -344,7 +344,7 @@ export class RmeService {
       console.warn("Send level out of range, will be clamped within 0 - 1");
     }
 
-    const alsaEntry = this.getAlsaInputEntry(channel.input);
+    const alsaEntry = this.getAlsaInputEntry(channel.id);
     if (!alsaEntry)
       throw new Error(`No ALSA entry found for channel ${channel.name}`);
 
