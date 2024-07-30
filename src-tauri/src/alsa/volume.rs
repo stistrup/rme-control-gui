@@ -3,7 +3,6 @@ use std::process::Command;
 use super::general;
 
 pub fn set_volume(card_index: &str, control_name: &str, volume: i32) -> Result<(), String> {
-    let card_index = state.alsa.get_card_index();
 
     // Clamp volume between 0 and 100
     let clamped_volume = volume.clamp(0, 100);

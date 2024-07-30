@@ -3,8 +3,8 @@ use super::volume;
 
 use std::process::Command;
 
-pub fn set_channel_send_level(card_name: &str, channel: &str, destination: &str, level: f32) -> Result<(), String> {
-    let card_index = general::find_card_index(card_name)?;
+pub fn set_channel_send_level(card_index: &str, channel: &str, destination: &str, level: f32) -> Result<(), String> {
+
     let clamped_level = (level * 100.0).clamp(0.0, 100.0) as i32;
 
     // Construct the control name using both channel and destination
@@ -26,8 +26,7 @@ pub fn set_channel_send_level(card_name: &str, channel: &str, destination: &str,
     }
 }
 
-pub fn get_channel_send_level(card_name: &str, channel: &str, destination: &str) -> Result<f32, String> {
-    let card_index = general::find_card_index(card_name)?;
+pub fn get_channel_send_level(card_index: &str, channel: &str, destination: &str) -> Result<f32, String> {
 
     // Construct the control name using both channel and destination
     let control_name = format!("{}-{}", channel, destination);

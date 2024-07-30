@@ -20,8 +20,7 @@ pub fn find_card_index(card_name: &str) -> Result<String, String> {
     Err(format!("Could not find card with name: {}", card_name))
 }
 
-pub fn get_soundcard_controls(card_name: &str) -> Result<HashMap<String, Vec<String>>, String> {
-    let card_index = find_card_index(card_name)?;
+pub fn get_soundcard_controls(card_index: &str) -> Result<HashMap<String, Vec<String>>, String> {
     println!("Found card index {} for {}", card_index, card_name);
 
     let output = Command::new("amixer")
@@ -59,15 +58,6 @@ pub fn get_soundcard_controls(card_name: &str) -> Result<HashMap<String, Vec<Str
     if let Some(name) = current_control {
         controls.insert(name, current_info);
     }
-
-    // // Print the controls
-    // println!("Controls:");
-    // for (name, info) in &controls {
-    //     println!("  {}: ", name);
-    //     for line in info {
-    //         println!("    {}", line);
-    //     }
-    // }
 
     Ok(controls)
 }
