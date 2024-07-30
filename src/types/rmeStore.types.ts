@@ -1,5 +1,3 @@
-import { InputType, RmeInput, RmeReturn } from "./rmeService.types";
-
 export interface MixerChannelBase {
   name: string;
   pipewirePortName: string;
@@ -26,11 +24,6 @@ export interface MixerChannelLine extends MixerChannelBase {
   sens?: MixerLineSens;
 }
 
-export interface MixerChannelPlayback extends MixerChannelBase {
-  id: RmeReturn.PLAYBACK;
-  inputType: InputType.GENERAL;
-}
-
 export enum MixerLineSens {
   MINUS_10,
   PLUS_4,
@@ -40,4 +33,3 @@ export type MixerChannel =
   | MixerChannelDefault
   | MixerChannelMic
   | MixerChannelLine
-  | MixerChannelPlayback;

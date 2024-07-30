@@ -10,11 +10,12 @@ import {
 } from "../config/channelsConfig";
 
 export const useRmeStore = defineStore("rme", () => {
-  const activeProfile = ref<null | string>(null);
   const alsaControls = ref<AudioControls>({});
   const headphoneVolume = ref(0);
   const monitorVolume = ref(0);
+  const activeProfile = ref<null | string>(null);
   const supportedProfiles = ref<string[]>([]);
+  const preferedProfiles = ref<string[]>([])
   const mixerChannels = ref<MixerChannel[]>([]);
   const playbackChannel = ref<MixerChannel | null>(null);
 
@@ -55,6 +56,10 @@ export const useRmeStore = defineStore("rme", () => {
     playbackChannel.value = channel;
   };
 
+  const setPreferedProfiles = (profiles: any) => {
+    preferedProfiles.value = profiles
+  }
+
   const setSupportedProfiles = (profiles: string[]) => {
     supportedProfiles.value = profiles;
   };
@@ -93,6 +98,7 @@ export const useRmeStore = defineStore("rme", () => {
     setControls,
     setMixerChannels,
     setPlaybackChannel,
+    setPreferedProfiles,
     setSupportedProfiles,
     updateControl,
   };

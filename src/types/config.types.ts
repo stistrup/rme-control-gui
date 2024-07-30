@@ -1,36 +1,50 @@
-import { RmeInput, RmeOutput, RmeReturn } from "./rmeService.types";
+export enum OutputType {
+  SPEAKERS,
+  HEADPHONES
+}
 
-export interface StereoOutput {
+export enum InputType {
+  MIC,
+  LINE
+}
+
+export interface Input {
   displayName: string;
-  id: RmeOutput;
-  alsaNameLeft: string;
-  alsaNameRight: string;
+  controlName: string;
+  switcheNames: InputSwitchNames
+  type: InputType;
 }
 
-export interface StereoReturn {
+export interface Output {
   displayName: string;
-  id: RmeReturn;
-  alsaNameLeft: string;
-  alsaNameRight: string;
+  controlNameLeft: string;
+  controlNameRight: string;
+  type: OutputType;
 }
 
-export interface MonoInput {
-  alsaName: string;
-  id: RmeInput;
+export interface InputSwitchNames {
+  phantom?: string;
+  lineSens?: string;
+  pad?: string;
+}
+
+export interface InputSwitchValues {
+  lineSensHigh: string;
+  lineSensLow: string;
+}
+
+export interface SoundcardConfig {
+  inputs: Input[];
+  outputs: Output[];
+  inputControlValues: InputSwitchValues;
+}
+
+export interface AudioProfile {
+  profileName: string;
   displayName: string;
-  controls: {
-    phantom?: string;
-    sensitivity?: string;
-  };
 }
 
-export interface AlsaConfig {
-  outputs: StereoOutput[];
-  inputs: MonoInput[];
-  playback: StereoReturn[];
-}
-
-export interface PipewireConfig {
-  defaultProfile: string;
-  proAudioProfile: string;
+export interface AudioProfiles {
+  proAudio: AudioProfile;
+  default: AudioProfile;
 }

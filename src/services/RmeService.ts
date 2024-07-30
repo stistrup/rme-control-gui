@@ -9,23 +9,24 @@ import {
   InputType,
   RmeReturn,
 } from "../types/rmeService.types";
-import { AlsaConfig } from "../types/config.types";
-import { alsaConfig } from "../config/alsaConfig";
 import { MixerChannel } from "../types/rmeStore.types";
+import { audioProfilesConfig, babyfaceProConf } from "../config/soundCardConfig";
+import { OutputType } from "../types/config.types";
 
 export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
-  private config: AlsaConfig = alsaConfig;
+  private config = babyfaceProConf;
+  private profiles = audioProfilesConfig
 
   constructor() {
     this.store = useRmeStore();
   }
 
-  private getAlsaInputEntry(channel: RmeInput | RmeOutput | RmeReturn) {
-    return alsaConfig.inputs.find((input) => input.id === channel);
-  }
+  // private getAlsaInputEntry(channel: RmeInput | RmeOutput | RmeReturn) {
+  //   return alsaConfig.inputs.find((input) => input.id === channel);
+  // }
 
-  public getCurrentStates = async () => {
+  public init = async () => {
     try {
       const rawControls = (await invoke("get_soundcard_controls") as Record<string, string[]>)
       const formattedControls = formatControls(rawControls);
@@ -37,6 +38,8 @@ export class RmeService {
       } else {
         console.warn("Could not get supported profiles");
       }
+
+      this.store.setPreferedProfiles(audioProfilesConfig)
 
       const activeProfile = await this.getActiveProfile();
       if (activeProfile) {
@@ -51,20 +54,6 @@ export class RmeService {
     }
   };
 
-  public findSoundCardNumber = async (cardName: string) => {
-    try {
-      const cardNumber = await invoke("find_sound_card_number", {
-        cardName,
-      });
-
-      console.log(typeof cardNumber);
-      return cardNumber as number;
-    } catch (error) {
-      console.error("Failed to initialize sound card:", error);
-      return null;
-    }
-  };
-
   private getActiveProfile = async () => {
     try {
       const activeProfile = await invoke("get_pipewire_active_profile");
@@ -76,54 +65,45 @@ export class RmeService {
     }
   };
 
-  public getControl = (name: string) => {
-    return this.store.alsaControls[name];
-  };
+  public getSendLevel = async (inputIndex: number, outputIndex: number) => {
+    if (inputIndex > this.config.inputs.length) return
+    if (outputIndex > this.config.outputs.length) return
 
-  public getSendLevel = async (channel: MixerChannel, output: RmeOutput) => {
-    const alsaEntry = this.getAlsaInputEntry(channel.id);
-    if (!alsaEntry)
-      throw new Error(`No ALSA entry found for channel ${channel.name}`);
-
-    const alsaOutput = alsaConfig.outputs.find((out) => out.id === output);
-
-    if (!alsaOutput) {
-      console.error("Alsa configuration not properly set up");
-      return;
-    }
 
     try {
       const left = (await invoke("get_channel_send_level", {
-        channel: alsaEntry.alsaName,
-        destination: alsaOutput.alsaNameLeft,
+        channel: this.config.inputs[inputIndex].controlName,
+        destination: this.config.outputs[outputIndex].controlNameLeft,
       })) as number;
       const right = (await invoke("get_channel_send_level", {
-        channel: alsaEntry.alsaName,
-        destination: alsaOutput.alsaNameRight,
+        channel: this.config.inputs[inputIndex].controlName,
+        destination: this.config.outputs[outputIndex].controlNameRight,
       })) as number;
 
       return { left, right };
     } catch (error) {
       console.error(
-        `Failed to fetch ${RmeOutput[output]} send level for ${channel.name}:`,
+        `Failed to fetch send level for ${this.config.inputs[inputIndex].displayName}:`,
         error
       );
       throw error;
     }
   };
 
-  public getPhantomState = async (channel: MixerChannel) => {
-    const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.id
-    );
+  public getPhantomState = async (inputIndex: number) => {
+    if (inputIndex > this.config.inputs.length) return
+    if (!this.config.inputs[inputIndex].switcheNames.phantom) {
+      console.error('This input does not support phantom. Cannot get')
+      return
+    }
 
-    if (!alsaEntry?.controls.phantom) return;
-
-    const fullName = `${alsaEntry.alsaName} ${alsaEntry.controls.phantom}`;
+    const inputName = this.config.inputs[inputIndex].controlName
+    const switchName = this.config.inputs[inputIndex].switcheNames.phantom
+    const fullControlName = `${inputName} ${switchName}`;
 
     try {
       const phantomState = (await invoke("get_phantom_power_state", {
-        micAlsaName: fullName,
+        micAlsaName: fullControlName,
       })) as boolean;
       console.log("Phantom state for", phantomState);
       return phantomState;
@@ -133,20 +113,22 @@ export class RmeService {
     }
   };
 
-  public getLineSensitivity = async (channel: MixerChannel) => {
-    const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.id
-    );
+  public getLineSensitivity = async (inputIndex: number) => {
+    if (inputIndex > this.config.inputs.length) return
+    if (!this.config.inputs[inputIndex].switcheNames.lineSens) {
+      console.error('This input does not support phantom. Cannot get')
+      return
+    }
 
-    if (!alsaEntry?.controls.sensitivity) return;
-
-    const fullName = `${alsaEntry.alsaName} ${alsaEntry.controls.sensitivity}`;
+    const inputName = this.config.inputs[inputIndex].controlName
+    const switchName = this.config.inputs[inputIndex].switcheNames.lineSens
+    const fullControlName = `${inputName} ${switchName}`;
 
     try {
       const sensitivity = (await invoke("get_line_input_sensitivity", {
-        lineInputName: fullName,
+        lineInputName: fullControlName,
       })) as string;
-      console.log("sensitivity for", channel.name, "is", sensitivity);
+      console.log("sensitivity for", this.config.inputs[inputIndex].displayName, "is", sensitivity);
       return sensitivity;
     } catch (error) {
       console.error("Failed to get initial states:", error);
@@ -175,28 +157,20 @@ export class RmeService {
     }
   };
 
-  public getOutputVolume = async (target: RmeOutput) => {
-    const alsaEntryTarget = alsaConfig.outputs.find(
-      (entry) => entry.id === target
-    );
-    const alsaEntrySource = alsaConfig.playback.find(
-      (entry) => entry.id === RmeReturn.PLAYBACK
-    );
+  public getOutputVolume = async (outputType: OutputType) => {
+    const output = this.config.outputs.find(output => output.type === outputType)
 
-    if (!alsaEntryTarget || !alsaEntrySource) {
-      console.error("Alsa entry not configured");
-      return;
+    if (!output){
+      console.error('Could not find output in configuration')
+      return
     }
-
-    const fullAlsaNameLeft = `${alsaEntrySource.alsaNameLeft}-${alsaEntryTarget.alsaNameLeft}`;
-    const fullAlsaNameRight = `${alsaEntrySource.alsaNameRight}-${alsaEntryTarget.alsaNameRight}`;
 
     try {
       const left = (await invoke("get_alsa_volume", {
-        controlName: fullAlsaNameLeft,
+        controlName: output.controlNameLeft,
       })) as number;
       const right = (await invoke("get_alsa_volume", {
-        controlName: fullAlsaNameRight,
+        controlName: output.controlNameRight,
       })) as number;
       return { left, right };
     } catch (error) {
@@ -228,28 +202,23 @@ export class RmeService {
   };
 
   public setLineSensitivity = async (
-    channel: MixerChannel,
+    inputIndex: number,
     newSens: string
   ) => {
-    if (channel.inputType !== InputType.LINE) {
-      console.error("This input type doesnt support line sensitivity");
-      return;
+    if (inputIndex > this.config.inputs.length) return
+    if (!this.config.inputs[inputIndex].switcheNames.lineSens) {
+      console.error('This input does not support line sensitivity')
+      return
     }
 
-    const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.id
-    );
 
-    if (!alsaEntry?.controls.sensitivity) {
-      console.error("Alsa not properly configured for lineSensitivity");
-      return;
-    }
-
-    const fullAlsaName = `${alsaEntry.alsaName} ${alsaEntry.controls.sensitivity}`;
+    const inputName = this.config.inputs[inputIndex].controlName
+    const switchName = this.config.inputs[inputIndex].switcheNames.lineSens
+    const fullControlName = `${inputName} ${switchName}`;
 
     try {
       await invoke("set_line_input_sensitivity", {
-        lineInputName: fullAlsaName,
+        lineInputName: fullControlName,
         sensitivity: newSens,
       });
 
@@ -259,26 +228,21 @@ export class RmeService {
       throw error;
     }
   };
-  public setPhantomPower = async (channel: MixerChannel, newState: boolean) => {
-    if (channel.inputType !== InputType.MIC) {
-      console.error("This input type doesnt support phantom power");
-      return;
+
+  public setPhantomPower = async (inputIndex: number, newState: boolean) => {
+    if (inputIndex > this.config.inputs.length) return
+    if (!this.config.inputs[inputIndex].switcheNames.lineSens) {
+      console.error('This input does not support line sensitivity')
+      return
     }
 
-    const alsaEntry = alsaConfig.inputs.find(
-      (input) => input.id === channel.id
-    );
-
-    if (!alsaEntry?.controls.phantom) {
-      console.error("Alsa not properly configured for phantom");
-      return;
-    }
-
-    const fullAlsaName = `${alsaEntry.alsaName} ${alsaEntry.controls.phantom}`;
+    const inputName = this.config.inputs[inputIndex].controlName
+    const switchName = this.config.inputs[inputIndex].switcheNames.phantom
+    const fullControlName = `${inputName} ${switchName}`;
 
     try {
       await invoke("set_phantom_power", {
-        micAlsaName: fullAlsaName,
+        micAlsaName: fullControlName,
         newState: newState,
       });
 
@@ -295,7 +259,7 @@ export class RmeService {
         profile,
       });
 
-      this.getCurrentStates();
+      this.init();
     } catch (error) {
       console.error("Failed to get pipewire profiles:", error);
       throw error;

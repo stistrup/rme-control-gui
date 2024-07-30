@@ -1,3 +1,4 @@
+import { AudioProfiles, SoundcardConfig } from "../types/config.types";
 
 export enum OutputType {
     SPEAKERS,
@@ -9,55 +10,69 @@ export enum InputType {
     LINE
 }
 
-export const babyfaceProConf = {
+export const babyfaceProConf: SoundcardConfig = {
     inputs: [
         {
             displayName: "Mic 1",
             controlName: "Mic-AN1",
-            hasPhantom: true,
-            hasLineSens: false,
-            type: InputType.MIC
+            type: InputType.MIC,
+            switcheNames: {
+                phantom: "Mic-AN1 48V"
+            }
         },
         {
             displayName: "Mic 2",
             controlName: "Mic-AN2",
-            hasPhantom: true,
-            hasLineSens: false,
-            type: InputType.MIC
+            type: InputType.MIC,
+            switcheNames: {
+                phantom: "Mic-AN2 48V"
+            }
         },
         {
             displayName: "Line 3",
             controlName: "Line-IN3",
-            hasPhantom: false,
-            hasLineSens: true,
-            type: InputType.LINE
+            type: InputType.LINE,
+            switcheNames: {
+                lineSens: "Sens.",
+            }
         },
         {
             displayName: "Line 4",
             controlName: "Line-IN4",
-            hasPhantom: false,
-            hasLineSens: true,
-            type: InputType.LINE
+            type: InputType.LINE,
+            switcheNames: {
+                lineSens: "Sens.",
+            }
         }
     ],
     outputs: [
         {
-            displayNamE: "Main Output",
+            displayName: "Main Output",
             controlNameLeft: "Main-Out AN1",
             controlNameRight: "Main-Out AN2",
             type: OutputType.SPEAKERS
         },
         {
-            displayNamE: "Headphones",
+            displayName: "Headphones",
             controlNameLeft: "Main-Out PH3",
             controlNameRight: "Main-Out PH4",
             type: OutputType.HEADPHONES
         }
     ],
-    inputControlNames: {
-        phantom: "48V",
+    inputControlValues: {
         lineSensLow: "+4dBu",
         lineSensHigh: "-10dBV",
-        pad: "PAD",
     }
 }
+
+
+export const audioProfilesConfig: AudioProfiles = {
+    proAudio: {
+        profileName: "pro-audio",
+        displayName: "Pro Audio"
+    },
+    default: {
+        profileName: "output:analog-stereo+input:analog-stereo",
+        displayName: "Default"
+    }
+  };
