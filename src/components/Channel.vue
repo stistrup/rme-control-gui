@@ -43,7 +43,7 @@ const handleMainSendLevel = (newValue: number) => {
   const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
   const floatValueExp = applyExponentialCurve(floatValue);
   rmeService
-    .setSendLevel(props.channel, RmeOutput.MONITORS, floatValueExp)
+    .setRoutingVolume(props.channel, RmeOutput.MONITORS, floatValueExp)
     .catch((error) => console.error("Failed to set main send level:", error));
 };
 
@@ -51,7 +51,7 @@ const handleHeadphonesSendLevel = (newValue: number) => {
   const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
   const floatValueExp = applyExponentialCurve(floatValue);
   rmeService
-    .setSendLevel(props.channel, RmeOutput.HEADPHONES, floatValueExp)
+    .setRoutingVolume(props.channel, RmeOutput.HEADPHONES, floatValueExp)
     .catch((error) =>
       console.error("Failed to set headphones send level:", error)
     );
@@ -59,7 +59,7 @@ const handleHeadphonesSendLevel = (newValue: number) => {
 
 const getMainSendLevel = async () => {
   try {
-    const levels = await rmeService.getSendLevel(
+    const levels = await rmeService.getRoutingVolume(
       props.channel,
       RmeOutput.MONITORS
     );
@@ -76,7 +76,7 @@ const getMainSendLevel = async () => {
 
 const getHeadphonesSendLevel = async () => {
   try {
-    const levels = await rmeService.getSendLevel(
+    const levels = await rmeService.getRoutingVolume(
       props.channel,
       RmeOutput.HEADPHONES
     );

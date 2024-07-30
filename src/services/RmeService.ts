@@ -65,7 +65,7 @@ export class RmeService {
     }
   };
 
-  public getSendLevel = async (inputIndex: number, outputIndex: number) => {
+  public getRoutingVolume = async (inputIndex: number, outputIndex: number) => {
     if (inputIndex > this.config.inputs.length) return
     if (outputIndex > this.config.outputs.length) return
 
@@ -279,46 +279,38 @@ export class RmeService {
     await this.setVolume(controlName, volume);
   };
 
-  public setSendLevel = async (
-    channel: MixerChannel,
-    output: RmeOutput,
+  public setRoutingVolume = async (
+    inputIndex: number,
+    outputIndex: number,
     level: number
   ) => {
     if (level < 0 || level > 1) {
       console.warn("Send level out of range, will be clamped within 0 - 1");
     }
+    if (inputIndex > this.config.inputs.length) return
+    if (outputIndex > this.config.outputs.length) return
 
-    const alsaEntry = this.getAlsaInputEntry(channel.id);
-    if (!alsaEntry)
-      throw new Error(`No ALSA entry found for channel ${channel.name}`);
+    // const inputName = this.config.inputs[inputIndex].controlName
+    // const outputName = this.config.outputs[outputIndex].controlNameLeft
+    // const fullControlName = `${inputName} ${switchName}`;
 
-    const alsaOutput = alsaConfig.outputs.find((out) => out.id === output);
 
-    if (!alsaOutput) {
-      console.error("Alsa configuration not properly set up");
-      return;
-    }
-
-    try {
-      await invoke("set_channel_send_level", {
-        channel: alsaEntry.alsaName,
-        destination: alsaOutput.alsaNameLeft,
-        level,
-      });
-      await invoke("set_channel_send_level", {
-        channel: alsaEntry.alsaName,
-        destination: alsaOutput.alsaNameRight,
-        level,
-      });
-    } catch (error) {
-      console.error(
-        `Failed to set ${RmeOutput[output]} send level for ${channel.name}:`,
-        error
-      );
-      throw error;
-    }
+    // try {
+    //   await invoke("set_routing_volume", {
+    //     source: alsaEntry.alsaName,
+    //     destination: alsaOutput.alsaNameLeft,
+    //     level,
+    //   });
+    // } catch (error) {
+    //   console.error(
+    //     `Failed to set routing volume for ${this.config.inputs[inputIndex].displayName}`,
+    //     error
+    //   );
+    //   throw error;
+    // }
   };
-  public setMonitorVolume = async (destination: RmeOutput, volume: number) => {
+
+  public setOutputVolume = async (outputType: OutputType, volume: number) => {
     if (!this.config) {
       console.error("RmePlugin not initialized");
       return;
@@ -328,22 +320,29 @@ export class RmeService {
       console.warn("Volume out of range, will be clamped within 0 - 100");
     }
 
-    const sourceLeft = this.config.playback[0].alsaNameLeft;
-    const sourceRight = this.config.playback[0].alsaNameRight;
+    const output = this.config.outputs.find(output => output.type === outputType)
 
-    let destinationLeft = "";
-    let destinationRight = "";
-
-    if (destination === RmeOutput.MONITORS) {
-      destinationLeft = this.config.outputs[0].alsaNameLeft;
-      destinationRight = this.config.outputs[0].alsaNameRight;
-    } else if (destination === RmeOutput.HEADPHONES) {
-      destinationLeft = this.config.outputs[1].alsaNameLeft;
-      destinationRight = this.config.outputs[1].alsaNameRight;
+    if (!output){
+      console.error('Could not find output in configuration')
+      return
     }
 
-    const controlNameLeft = `${sourceLeft}-${destinationLeft}`;
-    const controlNameRight = `${sourceRight}-${destinationRight}`;
+    await this.setVolume(output.controlNameLeft, volume);
+    await this.setVolume(output.controlNameRight, volume);
+  };
+
+  public setMainOutVolume = async (outputIndex: number, volume: number) => {
+    if (!this.config) {
+      console.error("RmePlugin not initialized");
+      return;
+    }
+
+    if (volume < 0 || volume > 100) {
+      console.warn("Volume out of range, will be clamped within 0 - 100");
+    }
+
+    const controlNameLeft = this.config.outputs[outputIndex].controlNameLeft;
+    const controlNameRight = this.config.outputs[outputIndex].controlNameRight;
 
     await this.setVolume(controlNameLeft, volume);
     await this.setVolume(controlNameRight, volume);

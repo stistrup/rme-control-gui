@@ -41,8 +41,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .invoke_handler(tauri::generate_handler![
             alsa::controller::get_alsa_volume,
             alsa::controller::set_alsa_volume,
-            alsa::controller::get_channel_send_level,
-            alsa::controller::set_channel_send_level,
+            alsa::controller::get_routing_volume,
+            alsa::controller::set_routing_volume,
             alsa::controller::get_line_input_sensitivity,
             alsa::controller::set_line_input_sensitivity,
             alsa::controller::get_phantom_power_state,

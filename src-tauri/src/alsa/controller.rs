@@ -1,7 +1,7 @@
 use crate::AppState;
 use std::collections::HashMap;
 use tauri::State;
-use super::{general, sends, switches, volume};
+use super::{general, routing, switches, volume};
 
 #[tauri::command]
 pub fn get_soundcard_controls(state: State<AppState>) -> Result<HashMap<String, Vec<String>>, String> {
@@ -10,15 +10,15 @@ pub fn get_soundcard_controls(state: State<AppState>) -> Result<HashMap<String, 
 }
 
 #[tauri::command]
-pub fn set_channel_send_level(state: State<AppState>, channel: String, destination: String, level: f32) -> Result<(), String> {
+pub fn set_routing_volume(state: State<AppState>, source: String, destination: String, level: f32) -> Result<(), String> {
     let card_number = &state.alsa_card_number;
-    sends::set_channel_send_level(&card_number, &channel, &destination, level)
+    routing::set_routing_volume(&card_number, &source, &destination, level)
 }
 
 #[tauri::command]
-pub fn get_channel_send_level(state: State<AppState>, channel: String, destination: String) -> Result<f32, String> {
+pub fn get_routing_volume(state: State<AppState>, source: String, destination: String) -> Result<f32, String> {
     let card_number = &state.alsa_card_number;
-    sends::get_channel_send_level(&card_number, &channel, &destination)
+    routing::get_routing_volume(&card_number, &source, &destination)
 }
 
 #[tauri::command]

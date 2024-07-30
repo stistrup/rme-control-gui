@@ -19,13 +19,13 @@ const headphonesVolume = ref(0);
 const handleMonitor = (volume: number) => {
   const monitorExpFloat = applyExponentialCurve(volume / 100);
   const monitorExp = Math.floor(monitorExpFloat * 100);
-  rmeService.setMonitorVolume(RmeOutput.MONITORS, monitorExp);
+  rmeService.setMainOutVolume(RmeOutput.MONITORS, monitorExp);
 };
 
 const handleHeadphones = (volume: number) => {
   const hpLinearFloat = applyExponentialCurve(volume / 100);
   const hpLinear = Math.floor(hpLinearFloat * 100);
-  rmeService.setMonitorVolume(RmeOutput.HEADPHONES, hpLinear);
+  rmeService.setMainOutVolume(RmeOutput.HEADPHONES, hpLinear);
 };
 
 onMounted(async () => {
