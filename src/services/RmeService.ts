@@ -16,8 +16,6 @@ import { MixerChannel } from "../types/rmeStore.types";
 export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
   private config: AlsaConfig = alsaConfig;
-  private alsaCardName = "Babyface Pro";
-  private pipewireCardName = "RME_Babyface_Pro";
 
   constructor() {
     this.store = useRmeStore();
@@ -29,16 +27,9 @@ export class RmeService {
 
   public getCurrentStates = async () => {
     try {
-      const rawControls = (await invoke("get_soundcard_controls", {
-        cardName: this.alsaCardName,
-      })) as Record<string, string[]>;
+      const rawControls = (await invoke("get_soundcard_controls") as Record<string, string[]>)
       const formattedControls = formatControls(rawControls);
       this.store.setControls(formattedControls);
-
-      const soundCardNumber = await this.findSoundCardNumber(this.alsaCardName);
-      if (soundCardNumber) {
-        this.store.setSoundcardNumber(soundCardNumber);
-      }
 
       const profiles = await this.getSoundCardProfiles();
       if (profiles) {
@@ -53,6 +44,8 @@ export class RmeService {
       } else {
         console.warn("Could not get active profiles");
       }
+
+      this.store.isInitialized = true
     } catch (error) {
       console.error("Error initializing audio:", error);
     }
@@ -74,9 +67,7 @@ export class RmeService {
 
   private getActiveProfile = async () => {
     try {
-      const activeProfile = await invoke("get_pipewire_active_profile", {
-        cardName: this.pipewireCardName,
-      });
+      const activeProfile = await invoke("get_pipewire_active_profile");
       console.log("Active profile retrieved:", activeProfile);
       return activeProfile as string;
     } catch (error) {
@@ -103,12 +94,10 @@ export class RmeService {
 
     try {
       const left = (await invoke("get_channel_send_level", {
-        cardName: this.alsaCardName,
         channel: alsaEntry.alsaName,
         destination: alsaOutput.alsaNameLeft,
       })) as number;
       const right = (await invoke("get_channel_send_level", {
-        cardName: this.alsaCardName,
         channel: alsaEntry.alsaName,
         destination: alsaOutput.alsaNameRight,
       })) as number;
@@ -134,7 +123,6 @@ export class RmeService {
 
     try {
       const phantomState = (await invoke("get_phantom_power_state", {
-        cardName: this.alsaCardName,
         micAlsaName: fullName,
       })) as boolean;
       console.log("Phantom state for", phantomState);
@@ -156,7 +144,6 @@ export class RmeService {
 
     try {
       const sensitivity = (await invoke("get_line_input_sensitivity", {
-        cardName: this.alsaCardName,
         lineInputName: fullName,
       })) as string;
       console.log("sensitivity for", channel.name, "is", sensitivity);
@@ -180,9 +167,7 @@ export class RmeService {
 
   private getSoundCardProfiles = async () => {
     try {
-      const profiles = await invoke("get_pipewire_profiles", {
-        cardName: this.pipewireCardName,
-      });
+      const profiles = await invoke("get_pipewire_profiles");
       return profiles as string[];
     } catch (error) {
       console.error("Failed to get pipewire profiles:", error);
@@ -208,11 +193,9 @@ export class RmeService {
 
     try {
       const left = (await invoke("get_alsa_volume", {
-        cardName: this.alsaCardName,
         controlName: fullAlsaNameLeft,
       })) as number;
       const right = (await invoke("get_alsa_volume", {
-        cardName: this.alsaCardName,
         controlName: fullAlsaNameRight,
       })) as number;
       return { left, right };
@@ -266,7 +249,6 @@ export class RmeService {
 
     try {
       await invoke("set_line_input_sensitivity", {
-        cardName: this.alsaCardName,
         lineInputName: fullAlsaName,
         sensitivity: newSens,
       });
@@ -296,7 +278,6 @@ export class RmeService {
 
     try {
       await invoke("set_phantom_power", {
-        cardName: this.alsaCardName,
         micAlsaName: fullAlsaName,
         newState: newState,
       });
@@ -311,7 +292,6 @@ export class RmeService {
   public setPipewireProfile = async (profile: string) => {
     try {
       await invoke("set_pipewire_profile", {
-        cardName: this.pipewireCardName,
         profile,
       });
 
@@ -357,13 +337,11 @@ export class RmeService {
 
     try {
       await invoke("set_channel_send_level", {
-        cardName: this.alsaCardName,
         channel: alsaEntry.alsaName,
         destination: alsaOutput.alsaNameLeft,
         level,
       });
       await invoke("set_channel_send_level", {
-        cardName: this.alsaCardName,
         channel: alsaEntry.alsaName,
         destination: alsaOutput.alsaNameRight,
         level,
@@ -408,14 +386,8 @@ export class RmeService {
   };
 
   public setVolume = async (controlName: string, volume: number) => {
-    if (!this.store.soundCardNumber) {
-      console.error("Cant set volume, sound card number not set");
-      return;
-    }
-
     try {
       await invoke("set_alsa_volume", {
-        cardName: this.alsaCardName,
         controlName,
         volume,
       });

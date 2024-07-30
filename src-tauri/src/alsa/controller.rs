@@ -1,68 +1,58 @@
+use crate::AppState;
 use std::collections::HashMap;
 use tauri::State;
 use super::{general, sends, switches, volume};
 
-pub struct AlsaController {
-    card_name: String,
-}
-
-impl AlsaController {
-    pub fn new(card_name: String) -> Result<Self, String> {
-        let card_index = general::find_card_index(&card_name)?;
-        Ok(Self { card_name, card_index })
-    }
-
-    pub fn get_card_index(&self) -> &str {
-        &self.card_index
-    }
+#[tauri::command]
+pub fn get_soundcard_controls(state: State<AppState>) -> Result<HashMap<String, Vec<String>>, String> {
+    let card_number = &state.alsa_card_number;
+    general::get_soundcard_controls(&card_number)
 }
 
 #[tauri::command]
-pub fn get_soundcard_controls(state: State<'_, super::super::AppState>) -> Result<HashMap<String, Vec<String>>, String> {
-    general::get_soundcard_controls(&state.alsa.card_index)
+pub fn set_channel_send_level(state: State<AppState>, channel: String, destination: String, level: f32) -> Result<(), String> {
+    let card_number = &state.alsa_card_number;
+    sends::set_channel_send_level(&card_number, &channel, &destination, level)
 }
 
 #[tauri::command]
-pub fn set_channel_send_level(state: State<'_, super::super::AppState>, channel: String, destination: String, level: f32) -> Result<(), String> {
-    sends::set_channel_send_level(&state.alsa.card_index, &channel, &destination, level)
+pub fn get_channel_send_level(state: State<AppState>, channel: String, destination: String) -> Result<f32, String> {
+    let card_number = &state.alsa_card_number;
+    sends::get_channel_send_level(&card_number, &channel, &destination)
 }
 
 #[tauri::command]
-pub fn get_channel_send_level(state: State<'_, super::super::AppState>, channel: String, destination: String) -> Result<f32, String> {
-    sends::get_channel_send_level(&state.alsa.card_index, &channel, &destination)
+pub fn set_phantom_power(state: State<AppState>, mic: String, new_state: bool) -> Result<(), String> {
+    let card_number = &state.alsa_card_number;
+    switches::set_phantom_power(&card_number, &mic, new_state)
 }
 
 #[tauri::command]
-pub fn set_phantom_power(state: State<'_, super::super::AppState>, mic: String, new_state: bool) -> Result<(), String> {
-    switches::set_phantom_power(&state.alsa.card_index, &mic, new_state)
+pub fn get_phantom_power_state(state: State<AppState>, mic_name: String) -> Result<bool, String> {
+    let card_number = &state.alsa_card_number;
+    switches::get_phantom_power_state(&card_number, &mic_name)
 }
 
 #[tauri::command]
-pub fn get_phantom_power_state(state: State<'_, super::super::AppState>, mic_name: String) -> Result<bool, String> {
-    switches::get_phantom_power_state(&state.alsa.card_index, &mic_name)
+pub fn get_line_input_sensitivity(state: State<AppState>, line_input_name: String) -> Result<String, String> {
+    let card_number = &state.alsa_card_number;
+    switches::get_line_input_sensitivity(&card_number, &line_input_name)
 }
 
 #[tauri::command]
-pub fn get_line_input_sensitivity(state: State<'_, super::super::AppState>, line_input_name: String) -> Result<String, String> {
-    switches::get_line_input_sensitivity(&state.alsa.card_index, &line_input_name)
+pub fn set_line_input_sensitivity(state: State<AppState>, line_input_name: String, sensitivity: String) -> Result<(), String> {
+    let card_number = &state.alsa_card_number;
+    switches::set_line_input_sensitivity(&card_number, &line_input_name, &sensitivity)
 }
 
 #[tauri::command]
-pub fn set_line_input_sensitivity(state: State<'_, super::super::AppState>, line_input_name: String, sensitivity: String) -> Result<(), String> {
-    switches::set_line_input_sensitivity(&state.alsa.card_index, &line_input_name, &sensitivity)
+pub fn set_alsa_volume(state: State<AppState>, control_name: String, volume: i32) -> Result<(), String> {
+    let card_number = &state.alsa_card_number;
+    volume::set_volume(&card_number, &control_name, volume)
 }
 
 #[tauri::command]
-pub fn set_alsa_volume(state: State<'_, super::super::AppState>, control_name: String, volume: i32) -> Result<(), String> {
-    volume::set_volume(&state.alsa.card_index, &control_name, volume)
-}
-
-#[tauri::command]
-pub fn get_alsa_volume(state: State<'_, super::super::AppState>, control_name: String) -> Result<i32, String> {
-    volume::get_volume(&state.alsa.card_index, &control_name)
-}
-
-#[tauri::command]
-pub fn find_sound_card_number(_state: State<'_, super::super::AppState>, card_name: String) -> Result<String, String> {
-    general::find_card_index(&card_name)
+pub fn get_alsa_volume(state: State<AppState>, control_name: String) -> Result<i32, String> {
+    let card_number = &state.alsa_card_number;
+    volume::get_volume(&card_number, &control_name)
 }

@@ -4,20 +4,27 @@
 mod alsa;
 mod pipewire;
 
-use alsa::AlsaController;
-use pipewire::PipeWireController;
 use tauri::Manager;
 
-struct AppState {
-    alsa: AlsaController,
-    pipewire: PipeWireController,
+pub struct AppState {
+    alsa_card_number: String,
+    pipewire_card_id: String,
 }
 
-fn main() {
-    let app_state = AppState {
-        alsa: AlsaController::new("Babyface Pro".to_string()),
-        pipewire: PipeWireController::new(),
-    };
+impl AppState {
+    pub fn new(card_name_alsa: &str, card_name_pipewire: &str) -> Result<Self, String> {
+        let alsa_card_number = alsa::general::get_card_number_by_name(card_name_alsa)?;
+        let pipewire_card_id = pipewire::general::get_card_id_by_name(card_name_pipewire)?;
+        
+        Ok(Self {
+            alsa_card_number,
+            pipewire_card_id,
+        })
+    }
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let app_state = AppState::new("Babyface Pro", "RME_Babyface_Pro")?;
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -32,7 +39,6 @@ fn main() {
         })
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            alsa::controller::find_sound_card_number,
             alsa::controller::get_alsa_volume,
             alsa::controller::set_alsa_volume,
             alsa::controller::get_channel_send_level,
@@ -51,4 +57,6 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    Ok(())
 }

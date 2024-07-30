@@ -1,4 +1,3 @@
-use super::general;
 use std::process::Command;
 
 pub fn set_phantom_power(card_index: &str, mic: &str, new_state: bool) -> Result<(), String> {

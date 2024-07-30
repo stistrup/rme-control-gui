@@ -25,30 +25,30 @@ pub fn get_card_id_by_name(card_name: &str) -> Result<String, String> {
     Err(format!("Could not find card with name: {}", card_name))
 }
 
-pub fn get_object_id_by_port_name(target_port_name: &str) -> Result<String, String> {
-    let stdout = get_pipewire_info()?;
+// pub fn get_object_id_by_port_name(target_port_name: &str) -> Result<String, String> {
+//     let stdout = get_pipewire_info()?;
 
-    let mut current_object_id: Option<String> = None;
-    let mut current_port_name: Option<String> = None;
+//     let mut current_object_id: Option<String> = None;
+//     let mut current_port_name: Option<String> = None;
 
-    for line in stdout.lines() {
-        if line.trim().starts_with("id: ") {
-            if let Some(port_name) = &current_port_name {
-                if port_name == target_port_name {
-                    return Ok(current_object_id.unwrap());
-                }
-            }
-            current_object_id = Some(line.split_whitespace().nth(1).unwrap_or("").to_string());
-            current_port_name = None;
-        }
+//     for line in stdout.lines() {
+//         if line.trim().starts_with("id: ") {
+//             if let Some(port_name) = &current_port_name {
+//                 if port_name == target_port_name {
+//                     return Ok(current_object_id.unwrap());
+//                 }
+//             }
+//             current_object_id = Some(line.split_whitespace().nth(1).unwrap_or("").to_string());
+//             current_port_name = None;
+//         }
         
-        if current_object_id.is_some() && line.contains("port.name") {
-            current_port_name = line.split_whitespace().last().map(|s| s.trim_matches('"').to_string());
-        }
-    }
+//         if current_object_id.is_some() && line.contains("port.name") {
+//             current_port_name = line.split_whitespace().last().map(|s| s.trim_matches('"').to_string());
+//         }
+//     }
 
-    Err(format!("Could not find object ID for port name: {}", target_port_name))
-}
+//     Err(format!("Could not find object ID for port name: {}", target_port_name))
+// }
 
 pub fn get_node_id_by_port_name(target_port_name: &str) -> Result<String, String> {
     let stdout = get_pipewire_info()?;

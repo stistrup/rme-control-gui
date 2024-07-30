@@ -14,7 +14,6 @@ export const useRmeStore = defineStore("rme", () => {
   const alsaControls = ref<AudioControls>({});
   const headphoneVolume = ref(0);
   const monitorVolume = ref(0);
-  const soundCardNumber = ref<number | null>(null);
   const supportedProfiles = ref<string[]>([]);
   const mixerChannels = ref<MixerChannel[]>([]);
   const playbackChannel = ref<MixerChannel | null>(null);
@@ -43,11 +42,6 @@ export const useRmeStore = defineStore("rme", () => {
     } else {
       console.warn(`Profile "${profile}" is not supported`);
     }
-  };
-
-  const setSoundcardNumber = (cardNumber: number) => {
-    soundCardNumber.value = cardNumber;
-    isInitialized.value = true;
   };
 
   const setControls = (newControls: AudioControls) => {
@@ -93,14 +87,12 @@ export const useRmeStore = defineStore("rme", () => {
     playbackChannel,
     profileDefault,
     profileProAudio,
-    soundCardNumber,
     supportedProfiles,
     isSupportedProfile,
     setActiveProfile,
     setControls,
     setMixerChannels,
     setPlaybackChannel,
-    setSoundcardNumber,
     setSupportedProfiles,
     updateControl,
   };

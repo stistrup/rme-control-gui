@@ -1,13 +1,5 @@
-use super::{buffer_size, general, profile, volume};
 use tauri::State;
-
-pub struct PipeWireController;
-
-impl PipeWireController {
-    pub fn new() -> Self {
-        Self
-    }
-}
+use super::{buffer_size, profile, volume};
 
 #[tauri::command]
 pub fn set_buffer_size(_state: State<'_, super::super::AppState>, buffer_size: u32) -> Result<(), String> {
@@ -15,29 +7,29 @@ pub fn set_buffer_size(_state: State<'_, super::super::AppState>, buffer_size: u
 }
 
 #[tauri::command]
-pub fn get_pipewire_active_profile(_state: State<'_, super::super::AppState>, card_name: String) -> Result<String, String> {
-    let card_id = general::get_card_id_by_name(&card_name)?;
+pub fn get_pipewire_active_profile(state: State<'_, super::super::AppState>) -> Result<String, String> {
+    let card_id = &state.pipewire_card_id;
     profile::get_active_profile(&card_id)
 }
 
 #[tauri::command]
-pub fn set_pipewire_profile(_state: State<'_, super::super::AppState>, card_name: String, profile: String) -> Result<(), String> {
-    let card_id = general::get_card_id_by_name(&card_name)?;
+pub fn set_pipewire_profile(state: State<'_, super::super::AppState>, profile: String) -> Result<(), String> {
+    let card_id = &state.pipewire_card_id;
     profile::set_profile(&card_id, &profile)
 }
 
 #[tauri::command]
-pub fn get_pipewire_profiles(_state: State<'_, super::super::AppState>, card_name: String) -> Result<Vec<String>, String> {
-    let card_id = general::get_card_id_by_name(&card_name)?;
+pub fn get_pipewire_profiles(state: State<'_, super::super::AppState>) -> Result<Vec<String>, String> {
+    let card_id = &state.pipewire_card_id;
     profile::get_profiles(&card_id)
 }
 
 #[tauri::command]
-pub fn get_pipewire_volume(_state: State<'_, super::super::AppState>, port_name: String) -> Result<f32, String> {
-    volume::get_volume(&port_name)
+pub fn get_pipewire_volume(_state: State<'_, super::super::AppState>, node_id: String) -> Result<f32, String> {
+    volume::get_volume(&node_id)
 }
 
 #[tauri::command]
-pub fn set_pipewire_volume(_state: State<'_, super::super::AppState>, port_name: String, gain: f32) -> Result<(), String> {
-    volume::set_volume(&port_name, gain)
+pub fn set_pipewire_volume(_state: State<'_, super::super::AppState>, node_id: String, gain: f32) -> Result<(), String> {
+    volume::set_volume(&node_id, gain)
 }

@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::collections::HashMap;
 
-pub fn find_card_index(card_name: &str) -> Result<String, String> {
+pub fn get_card_number_by_name(card_name: &str) -> Result<String, String> {
     let output = Command::new("aplay")
         .arg("-l")
         .output()
@@ -21,7 +21,6 @@ pub fn find_card_index(card_name: &str) -> Result<String, String> {
 }
 
 pub fn get_soundcard_controls(card_index: &str) -> Result<HashMap<String, Vec<String>>, String> {
-    println!("Found card index {} for {}", card_index, card_name);
 
     let output = Command::new("amixer")
         .args(&["-c", &card_index])
