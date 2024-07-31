@@ -1,4 +1,4 @@
-import { AudioProfiles, SoundcardConfig } from "../types/config.types";
+import { AudioProfile, SoundcardConfig } from "../types/config.types";
 
 export enum OutputType {
     SPEAKERS,
@@ -16,7 +16,7 @@ export const babyfaceProConf: SoundcardConfig = {
             displayName: "Mic 1",
             controlName: "Mic-AN1",
             type: InputType.MIC,
-            switcheNames: {
+            switchNames: {
                 phantom: "Mic-AN1 48V"
             }
         },
@@ -24,7 +24,7 @@ export const babyfaceProConf: SoundcardConfig = {
             displayName: "Mic 2",
             controlName: "Mic-AN2",
             type: InputType.MIC,
-            switcheNames: {
+            switchNames: {
                 phantom: "Mic-AN2 48V"
             }
         },
@@ -32,7 +32,7 @@ export const babyfaceProConf: SoundcardConfig = {
             displayName: "Line 3",
             controlName: "Line-IN3",
             type: InputType.LINE,
-            switcheNames: {
+            switchNames: {
                 lineSens: "Sens.",
             }
         },
@@ -40,7 +40,7 @@ export const babyfaceProConf: SoundcardConfig = {
             displayName: "Line 4",
             controlName: "Line-IN4",
             type: InputType.LINE,
-            switcheNames: {
+            switchNames: {
                 lineSens: "Sens.",
             }
         }
@@ -59,20 +59,23 @@ export const babyfaceProConf: SoundcardConfig = {
             type: OutputType.HEADPHONES
         }
     ],
-    inputControlValues: {
+    inputSwitchValues: {
         lineSensLow: "+4dBu",
         lineSensHigh: "-10dBV",
+    },
+    inputRange: {
+        min: 0,
+        max: 65536
     }
 }
 
-
-export const audioProfilesConfig: AudioProfiles = {
-    proAudio: {
+export const audioProfilesConfig: AudioProfile[] = [
+    {
         profileName: "pro-audio",
         displayName: "Pro Audio"
     },
-    default: {
+    {
         profileName: "output:analog-stereo+input:analog-stereo",
         displayName: "Default"
     }
-  };
+];

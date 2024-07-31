@@ -13,10 +13,9 @@ if (!rmePlugin) {
 
 const bufferSizes = [32, 64, 128, 256, 512, 1024, 2048];
 
-const handleUpdateProfile = (profile: string) => {
-  if (rmeStore.isSupportedProfile(profile)) {
-    rmePlugin.setPipewireProfile(profile);
-  }
+const setAudioProfile = (profile: string) => {
+  console.log('setProfile placeholder')
+  // rmePlugin.setPipewireProfile(profile);
 };
 
 const handleSetBufferSize = () => {
@@ -25,39 +24,19 @@ const handleSetBufferSize = () => {
   }
 };
 
-// Profile Switch Logic
-const profileSwitchEnabled = computed(() => {
-  return rmeStore.profileDefault && rmeStore.profileProAudio;
-});
-
-const toggleProfile = () => {
-  if (!rmeStore.profileProAudio || !rmeStore.profileDefault) return;
-  if (rmeStore.activeProfile === rmeStore.profileDefault) {
-    handleUpdateProfile(rmeStore.profileProAudio);
-  } else {
-    handleUpdateProfile(rmeStore.profileDefault);
-  }
-};
 </script>
 
 <template>
   <div :class="$style.settingsContainer">
-    <div v-if="profileSwitchEnabled" :class="$style.controlGroup">
+    <div v-if="rmeStore.activeProfile" :class="$style.controlGroup">
       <span :class="$style.label">
         Audio profile:
         {{
-          rmeStore.activeProfile === rmeStore.profileProAudio
-            ? "Pro Audio"
-            : "Default"
+          rmeStore.activeProfile.displayName
         }}
       </span>
-      <button :class="$style.button" @click="toggleProfile">
-        Switch to
-        {{
-          rmeStore.activeProfile === rmeStore.profileProAudio
-            ? "Default"
-            : "Pro Audio"
-        }}
+      <button :class="$style.button" @click="setAudioProfile('lalala')">
+        Switch
       </button>
     </div>
     <div :class="$style.controlGroup">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRmeStore } from "../stores/rmeStore";
-import Channel from "./Channel.vue";
+import ChannelInput from "./ChannelInput.vue";
+import MonitorControl from "./MonitorControl.vue";
 
 const rmeStore = useRmeStore();
 </script>
@@ -8,14 +9,16 @@ const rmeStore = useRmeStore();
 <template>
   <div :class="$style.mixer">
     <div :class="$style.channelInputs">
-      <Channel
-        v-for="channel in rmeStore.mixerChannels"
-        :channel="channel"
-        :key="channel.pipewirePortName"
+      <ChannelInput
+        v-for="channel in rmeStore.inputs"
+        :inputChannel="channel"
+        :key="channel.controlName"
       />
     </div>
-    <div :class="$style.playback" v-if="rmeStore.playbackChannel">
-      <Channel :channel="rmeStore.playbackChannel" />
+    <div :class="$style.channelOutputs">
+      <MonitorControl
+        :outputs="rmeStore.outputs"
+      />
     </div>
   </div>
 </template>
@@ -25,7 +28,7 @@ const rmeStore = useRmeStore();
   display: flex;
 }
 
-.playback {
+.channelOutputs {
   margin-left: 30px;
 }
 

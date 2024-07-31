@@ -2,11 +2,17 @@
 import { inject, onMounted, ref } from "vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
-import { RmeOutput } from "../types/rmeService.types";
 import {
   applyExponentialCurve,
   removeExponentialCurve,
 } from "../utils/logConvertion";
+import { AlsaOutput } from "../types/config.types";
+
+interface MonitorControlProps {
+  outputs: AlsaOutput[];
+}
+
+const props = defineProps<MonitorControlProps>();
 
 const rmeService = inject<RmeService>("RmeService");
 if (!rmeService) {

@@ -3,23 +3,19 @@ import { ref, computed, onMounted, onUnmounted, watchEffect } from "vue";
 
 interface KnobProps {
   label: string;
-  min?: number;
-  max?: number;
-  step?: number;
-  modelValue: number;
+  min: number;
+  max: number;
+  value: number;
   size?: number;
 }
 
 const props = withDefaults(defineProps<KnobProps>(), {
-  min: 0,
-  max: 100,
-  step: 1,
   size: 80,
 });
 
 const emit = defineEmits(["newValue"]);
 
-const localValue = ref(props.modelValue);
+const localValue = ref(props.value);
 const isDragging = ref(false);
 const startY = ref(0);
 const startValue = ref(0);
@@ -74,7 +70,7 @@ function drag(event: MouseEvent) {
 
   let newValue = startValue.value + (deltaY / sensitivity) * range;
   newValue = Math.max(props.min, Math.min(props.max, newValue));
-  newValue = Math.round(newValue / props.step) * props.step;
+  newValue = Math.round(newValue);
 
   localValue.value = newValue;
   emit("newValue", newValue);
@@ -87,11 +83,11 @@ function stopDrag() {
 }
 
 watchEffect(() => {
-  localValue.value = props.modelValue;
+  localValue.value = props.value;
 });
 
 onMounted(() => {
-  localValue.value = props.modelValue;
+  localValue.value = props.value;
 });
 
 onUnmounted(() => {

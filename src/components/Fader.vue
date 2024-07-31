@@ -3,10 +3,9 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 
 interface FaderProps {
   label: string;
-  min?: number;
-  max?: number;
-  step?: number;
-  modelValue: number;
+  min: number;
+  max: number;
+  value: number;
 }
 
 const props = withDefaults(defineProps<FaderProps>(), {
@@ -17,7 +16,7 @@ const props = withDefaults(defineProps<FaderProps>(), {
 
 const emit = defineEmits(["newValue"]);
 
-const localValue = ref(props.modelValue);
+const localValue = ref(props.value);
 const isDragging = ref(false);
 const startY = ref(0);
 const startValue = ref(0);
@@ -66,7 +65,7 @@ function stopDrag() {
 }
 
 onMounted(() => {
-  localValue.value = props.modelValue;
+  localValue.value = props.value;
 });
 
 onUnmounted(() => {

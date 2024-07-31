@@ -2,21 +2,10 @@ import { App } from "vue";
 import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
 import { invoke } from "@tauri-apps/api/core";
-import {
-  RmeInput,
-  RmeOutput,
-  InitialStates,
-  InputType,
-  RmeReturn,
-} from "../types/rmeService.types";
-import { MixerChannel } from "../types/rmeStore.types";
-import { audioProfilesConfig, babyfaceProConf } from "../config/soundCardConfig";
 import { OutputType } from "../types/config.types";
 
 export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
-  private config = babyfaceProConf;
-  private profiles = audioProfilesConfig
 
   constructor() {
     this.store = useRmeStore();
@@ -38,8 +27,6 @@ export class RmeService {
       } else {
         console.warn("Could not get supported profiles");
       }
-
-      this.store.setPreferedProfiles(audioProfilesConfig)
 
       const activeProfile = await this.getActiveProfile();
       if (activeProfile) {
@@ -65,25 +52,30 @@ export class RmeService {
     }
   };
 
-  public getRoutingVolume = async (inputIndex: number, outputIndex: number) => {
-    if (inputIndex > this.config.inputs.length) return
-    if (outputIndex > this.config.outputs.length) return
+  public getOutputRoutingVolume = async (inputIndex: number, outputType: OutputType) => {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
 
+    const output = this.store.outputs.find(output => output.type === outputType)
+
+    if (!output) {
+      console.error('Could not find output in config')
+      return
+    }
 
     try {
       const left = (await invoke("get_channel_send_level", {
-        channel: this.config.inputs[inputIndex].controlName,
-        destination: this.config.outputs[outputIndex].controlNameLeft,
+        channel: this.store.soundCardConfig.inputs[inputIndex].controlName,
+        destination: output.controlNameLeft,
       })) as number;
       const right = (await invoke("get_channel_send_level", {
-        channel: this.config.inputs[inputIndex].controlName,
-        destination: this.config.outputs[outputIndex].controlNameRight,
+        channel: this.store.soundCardConfig.inputs[inputIndex].controlName,
+        destination: output.controlNameRight,
       })) as number;
 
       return { left, right };
     } catch (error) {
       console.error(
-        `Failed to fetch send level for ${this.config.inputs[inputIndex].displayName}:`,
+        `Failed to fetch send level for ${this.store.soundCardConfig.inputs[inputIndex].displayName}:`,
         error
       );
       throw error;
@@ -91,14 +83,14 @@ export class RmeService {
   };
 
   public getPhantomState = async (inputIndex: number) => {
-    if (inputIndex > this.config.inputs.length) return
-    if (!this.config.inputs[inputIndex].switcheNames.phantom) {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom) {
       console.error('This input does not support phantom. Cannot get')
       return
     }
 
-    const inputName = this.config.inputs[inputIndex].controlName
-    const switchName = this.config.inputs[inputIndex].switcheNames.phantom
+    const inputName = this.store.soundCardConfig.inputs[inputIndex].controlName
+    const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom
     const fullControlName = `${inputName} ${switchName}`;
 
     try {
@@ -114,21 +106,21 @@ export class RmeService {
   };
 
   public getLineSensitivity = async (inputIndex: number) => {
-    if (inputIndex > this.config.inputs.length) return
-    if (!this.config.inputs[inputIndex].switcheNames.lineSens) {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens) {
       console.error('This input does not support phantom. Cannot get')
       return
     }
 
-    const inputName = this.config.inputs[inputIndex].controlName
-    const switchName = this.config.inputs[inputIndex].switcheNames.lineSens
+    const inputName = this.store.soundCardConfig.inputs[inputIndex].controlName
+    const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens
     const fullControlName = `${inputName} ${switchName}`;
 
     try {
       const sensitivity = (await invoke("get_line_input_sensitivity", {
         lineInputName: fullControlName,
       })) as string;
-      console.log("sensitivity for", this.config.inputs[inputIndex].displayName, "is", sensitivity);
+      console.log("sensitivity for", this.store.soundCardConfig.inputs[inputIndex].displayName, "is", sensitivity);
       return sensitivity;
     } catch (error) {
       console.error("Failed to get initial states:", error);
@@ -136,11 +128,12 @@ export class RmeService {
     }
   };
 
-  public getInitialStates = async (): Promise<InitialStates> => {
+  // TODO:
+  public getInitialStates = async (): Promise<any> => {
     try {
-      const states = (await invoke("get_initial_states")) as InitialStates;
+      const states = (await invoke("get_initial_states")) as any;
       console.log("Initial states retrieved:", states);
-      return states as InitialStates;
+      return states as any;
     } catch (error) {
       console.error("Failed to get initial states:", error);
       throw error;
@@ -158,7 +151,7 @@ export class RmeService {
   };
 
   public getOutputVolume = async (outputType: OutputType) => {
-    const output = this.config.outputs.find(output => output.type === outputType)
+    const output = this.store.soundCardConfig.outputs.find(output => output.type === outputType)
 
     if (!output){
       console.error('Could not find output in configuration')
@@ -205,15 +198,15 @@ export class RmeService {
     inputIndex: number,
     newSens: string
   ) => {
-    if (inputIndex > this.config.inputs.length) return
-    if (!this.config.inputs[inputIndex].switcheNames.lineSens) {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens) {
       console.error('This input does not support line sensitivity')
       return
     }
 
 
-    const inputName = this.config.inputs[inputIndex].controlName
-    const switchName = this.config.inputs[inputIndex].switcheNames.lineSens
+    const inputName = this.store.soundCardConfig.inputs[inputIndex].controlName
+    const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens
     const fullControlName = `${inputName} ${switchName}`;
 
     try {
@@ -230,14 +223,14 @@ export class RmeService {
   };
 
   public setPhantomPower = async (inputIndex: number, newState: boolean) => {
-    if (inputIndex > this.config.inputs.length) return
-    if (!this.config.inputs[inputIndex].switcheNames.lineSens) {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens) {
       console.error('This input does not support line sensitivity')
       return
     }
 
-    const inputName = this.config.inputs[inputIndex].controlName
-    const switchName = this.config.inputs[inputIndex].switcheNames.phantom
+    const inputName = this.store.soundCardConfig.inputs[inputIndex].controlName
+    const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom
     const fullControlName = `${inputName} ${switchName}`;
 
     try {
@@ -266,52 +259,41 @@ export class RmeService {
     }
   };
 
-  public setChannelVolume = async (
-    input: RmeInput,
-    output: RmeOutput,
-    volume: number
-  ) => {
-    if (!this.config) {
-      console.error("RmePlugin not initialized");
-      return;
-    }
-    const controlName = `${RmeInput[input]}-${RmeOutput[output]}-Master`;
-    await this.setVolume(controlName, volume);
-  };
-
-  public setRoutingVolume = async (
+  public setOutputRoutingVolume = async (
     inputIndex: number,
     outputIndex: number,
     level: number
   ) => {
-    if (level < 0 || level > 1) {
-      console.warn("Send level out of range, will be clamped within 0 - 1");
+    const input = this.store.soundCardConfig.inputs[inputIndex]
+    const output = this.store.soundCardConfig.outputs[outputIndex]
+
+    if (!input || !output) {
+      console.error('Error setting output routing volume', input, output)
+      return
     }
-    if (inputIndex > this.config.inputs.length) return
-    if (outputIndex > this.config.outputs.length) return
 
-    // const inputName = this.config.inputs[inputIndex].controlName
-    // const outputName = this.config.outputs[outputIndex].controlNameLeft
-    // const fullControlName = `${inputName} ${switchName}`;
-
-
-    // try {
-    //   await invoke("set_routing_volume", {
-    //     source: alsaEntry.alsaName,
-    //     destination: alsaOutput.alsaNameLeft,
-    //     level,
-    //   });
-    // } catch (error) {
-    //   console.error(
-    //     `Failed to set routing volume for ${this.config.inputs[inputIndex].displayName}`,
-    //     error
-    //   );
-    //   throw error;
-    // }
+    try {
+      await invoke("set_routing_volume", {
+        source: input.controlName,
+        destination: output.controlNameLeft,
+        level,
+      });
+      await invoke("set_routing_volume", {
+        source: input.controlName,
+        destination: output.controlNameRight,
+        level,
+      });
+    } catch (error) {
+      console.error(
+        `Failed to set routing volume for ${this.store.soundCardConfig.inputs[inputIndex].displayName}`,
+        error
+      );
+      throw error;
+    }
   };
 
   public setOutputVolume = async (outputType: OutputType, volume: number) => {
-    if (!this.config) {
+    if (!this.store.soundCardConfig) {
       console.error("RmePlugin not initialized");
       return;
     }
@@ -320,7 +302,7 @@ export class RmeService {
       console.warn("Volume out of range, will be clamped within 0 - 100");
     }
 
-    const output = this.config.outputs.find(output => output.type === outputType)
+    const output = this.store.soundCardConfig.outputs.find(output => output.type === outputType)
 
     if (!output){
       console.error('Could not find output in configuration')
@@ -332,7 +314,7 @@ export class RmeService {
   };
 
   public setMainOutVolume = async (outputIndex: number, volume: number) => {
-    if (!this.config) {
+    if (!this.store.soundCardConfig) {
       console.error("RmePlugin not initialized");
       return;
     }
@@ -341,8 +323,8 @@ export class RmeService {
       console.warn("Volume out of range, will be clamped within 0 - 100");
     }
 
-    const controlNameLeft = this.config.outputs[outputIndex].controlNameLeft;
-    const controlNameRight = this.config.outputs[outputIndex].controlNameRight;
+    const controlNameLeft = this.store.soundCardConfig.outputs[outputIndex].controlNameLeft;
+    const controlNameRight = this.store.soundCardConfig.outputs[outputIndex].controlNameRight;
 
     await this.setVolume(controlNameLeft, volume);
     await this.setVolume(controlNameRight, volume);

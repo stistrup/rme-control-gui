@@ -8,43 +8,44 @@ export enum InputType {
   LINE
 }
 
-export interface Input {
+export interface AlsaInput {
   displayName: string;
   controlName: string;
-  switcheNames: InputSwitchNames
+  switchNames: AlsaInputSwitchNames
   type: InputType;
 }
 
-export interface Output {
+export interface AlsaOutput {
   displayName: string;
   controlNameLeft: string;
   controlNameRight: string;
   type: OutputType;
 }
 
-export interface InputSwitchNames {
+export interface AlsaInputSwitchNames {
   phantom?: string;
   lineSens?: string;
   pad?: string;
 }
 
-export interface InputSwitchValues {
+export interface AlsaInputSwitchValues {
   lineSensHigh: string;
   lineSensLow: string;
 }
 
 export interface SoundcardConfig {
-  inputs: Input[];
-  outputs: Output[];
-  inputControlValues: InputSwitchValues;
+  inputs: AlsaInput[];
+  outputs: AlsaOutput[];
+  inputSwitchValues: AlsaInputSwitchValues;
+  inputRange: InputRange
+}
+
+export interface InputRange {
+  min: number,
+  max: number
 }
 
 export interface AudioProfile {
   profileName: string;
   displayName: string;
-}
-
-export interface AudioProfiles {
-  proAudio: AudioProfile;
-  default: AudioProfile;
 }
