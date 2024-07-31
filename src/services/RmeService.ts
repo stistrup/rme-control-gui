@@ -258,18 +258,16 @@ export class RmeService {
 
   public setPhantomPower = async (inputIndex: number, newState: boolean) => {
     if (inputIndex > this.store.soundCardConfig.inputs.length) return
-    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens) {
+    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom) {
       console.error('This input does not support line sensitivity')
       return
     }
 
-    const inputName = this.store.soundCardConfig.inputs[inputIndex].controlName
     const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom
-    const fullControlName = `${inputName} ${switchName}`;
 
     try {
       await invoke("set_phantom_power", {
-        micAlsaName: fullControlName,
+        controlName: switchName,
         newState: newState,
       });
 

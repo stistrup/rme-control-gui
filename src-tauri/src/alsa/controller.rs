@@ -34,9 +34,9 @@ pub fn get_routing_volume(state: State<AppState>, source: String, destination: S
 }
 
 #[tauri::command]
-pub fn set_phantom_power(state: State<AppState>, mic: String, new_state: bool) -> Result<(), String> {
+pub fn set_phantom_power(state: State<AppState>, control_name: String, new_state: bool) -> Result<(), String> {
     let card_number = &state.alsa_card_number;
-    switches::set_phantom_power(&card_number, &mic, new_state)
+    switches::set_phantom_power(&card_number, &control_name, new_state)
 }
 
 #[tauri::command]
