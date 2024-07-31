@@ -63,13 +63,13 @@ export class RmeService {
     }
 
     try {
-      const left = (await invoke("get_channel_send_level", {
-        channel: this.store.soundCardConfig.inputs[inputIndex].controlName,
-        destination: output.controlNameLeft,
+      const left = (await invoke("get_routing_volume", {
+        source: this.store.soundCardConfig.inputs[inputIndex].controlName,
+        destination: output.routeNameLeft,
       })) as number;
-      const right = (await invoke("get_channel_send_level", {
-        channel: this.store.soundCardConfig.inputs[inputIndex].controlName,
-        destination: output.controlNameRight,
+      const right = (await invoke("get_routing_volume", {
+        source: this.store.soundCardConfig.inputs[inputIndex].controlName,
+        destination: output.routeNameRight,
       })) as number;
 
       return { left, right };
@@ -84,20 +84,19 @@ export class RmeService {
 
   public getPhantomState = async (inputIndex: number) => {
     if (inputIndex > this.store.soundCardConfig.inputs.length) return
-    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom) {
+
+    const input = this.store.soundCardConfig.inputs[inputIndex]
+
+    if (!input.switchNames.phantom) {
       console.error('This input does not support phantom. Cannot get')
       return
     }
 
-    const inputName = this.store.soundCardConfig.inputs[inputIndex].controlName
-    const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom
-    const fullControlName = `${inputName} ${switchName}`;
-
     try {
       const phantomState = (await invoke("get_phantom_power_state", {
-        micAlsaName: fullControlName,
+        controlName: input.switchNames.phantom,
       })) as boolean;
-      console.log("Phantom state for", phantomState);
+      console.log("Phantom state for", input.displayName, ':', phantomState);
       return phantomState;
     } catch (error) {
       console.error("Failed to get initial states:", error);
@@ -139,6 +138,41 @@ export class RmeService {
       throw error;
     }
   };
+
+  public getInputGain = async (inputIndex: number) => {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+
+    const controlName = this.store.soundCardConfig.inputs[inputIndex].switchNames.gain
+
+    try {
+      const gain = (await invoke("get_input_gain", {
+        controlName: controlName,
+      }) as number);
+
+      return gain;
+    } catch (error) {
+      console.error("Failed to set line sensitivity", error);
+      throw error;
+    }
+  }
+
+  public setInputGain = async (inputIndex: number, gain: number) => {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+
+    const controlName = this.store.soundCardConfig.inputs[inputIndex].switchNames.gain
+
+    try {
+      const result = (await invoke("set", {
+        controlName: controlName,
+        gain
+      }) as number);
+
+      return result;
+    } catch (error) {
+      console.error("Failed to set line sensitivity", error);
+      throw error;
+    }
+  }
 
   private getSoundCardProfiles = async () => {
     try {
@@ -298,10 +332,6 @@ export class RmeService {
       return;
     }
 
-    if (volume < 0 || volume > 100) {
-      console.warn("Volume out of range, will be clamped within 0 - 100");
-    }
-
     const output = this.store.soundCardConfig.outputs.find(output => output.type === outputType)
 
     if (!output){
@@ -311,23 +341,6 @@ export class RmeService {
 
     await this.setVolume(output.controlNameLeft, volume);
     await this.setVolume(output.controlNameRight, volume);
-  };
-
-  public setMainOutVolume = async (outputIndex: number, volume: number) => {
-    if (!this.store.soundCardConfig) {
-      console.error("RmePlugin not initialized");
-      return;
-    }
-
-    if (volume < 0 || volume > 100) {
-      console.warn("Volume out of range, will be clamped within 0 - 100");
-    }
-
-    const controlNameLeft = this.store.soundCardConfig.outputs[outputIndex].controlNameLeft;
-    const controlNameRight = this.store.soundCardConfig.outputs[outputIndex].controlNameRight;
-
-    await this.setVolume(controlNameLeft, volume);
-    await this.setVolume(controlNameRight, volume);
   };
 
   public setVolume = async (controlName: string, volume: number) => {

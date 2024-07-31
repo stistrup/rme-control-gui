@@ -6,15 +6,18 @@ import {
   applyExponentialCurve,
   removeExponentialCurve,
 } from "../utils/logConvertion";
-import { AlsaOutput } from "../types/config.types";
+import { AlsaOutput, OutputType } from "../types/config.types";
+import { useRmeStore } from "../stores/rmeStore";
 
 interface MonitorControlProps {
   outputs: AlsaOutput[];
 }
 
-const props = defineProps<MonitorControlProps>();
+defineProps<MonitorControlProps>();
 
 const rmeService = inject<RmeService>("RmeService");
+const rmeStore = useRmeStore()
+
 if (!rmeService) {
   throw new Error("Could not inject RME service");
 }
@@ -22,50 +25,44 @@ if (!rmeService) {
 const monitorVolume = ref(0);
 const headphonesVolume = ref(0);
 
-const handleMonitor = (volume: number) => {
-  const monitorExpFloat = applyExponentialCurve(volume / 100);
-  const monitorExp = Math.floor(monitorExpFloat * 100);
-  rmeService.setMainOutVolume(RmeOutput.MONITORS, monitorExp);
-};
-
-const handleHeadphones = (volume: number) => {
-  const hpLinearFloat = applyExponentialCurve(volume / 100);
-  const hpLinear = Math.floor(hpLinearFloat * 100);
-  rmeService.setMainOutVolume(RmeOutput.HEADPHONES, hpLinear);
+const setOutputVolume = (outputType: OutputType, volume: number) => {
+  // const monitorExpFloat = applyExponentialCurve(volume / 100);
+  // const monitorExp = Math.floor(monitorExpFloat * 100);
+  rmeService.setOutputVolume(outputType, volume);
 };
 
 onMounted(async () => {
-  const monitor = await rmeService.getOutputVolume(RmeOutput.MONITORS);
-  const hp = await rmeService.getOutputVolume(RmeOutput.HEADPHONES);
+  const monitor = await rmeService.getOutputVolume(OutputType.SPEAKERS);
+  const hp = await rmeService.getOutputVolume(OutputType.HEADPHONES);
 
   if (!hp || !monitor) return;
 
   const monitorAvarage = (monitor.left + monitor.right) / 2;
   const hpAvarage = (hp.left + hp.right) / 2;
 
-  const monitorLinear = removeExponentialCurve(monitorAvarage / 100);
-  const hpLinear = removeExponentialCurve(hpAvarage / 100);
-  monitorVolume.value = monitorLinear * 100;
-  headphonesVolume.value = hpLinear * 100;
+  // const monitorLinear = removeExponentialCurve(monitorAvarage / 100);
+  // const hpLinear = removeExponentialCurve(hpAvarage / 100);
+  monitorVolume.value = monitorAvarage
+  headphonesVolume.value = hpAvarage;
 });
 </script>
 
 <template>
   <Knob
     :label="'Monitor volume'"
-    :model-value="monitorVolume"
-    :min="0"
-    :max="100"
+    :value="monitorVolume"
+    :min="rmeStore.soundCardConfig.inputRange.min"
+    :max="rmeStore.soundCardConfig.inputRange.max"
     :size="200"
-    @new-value="handleMonitor"
+    @new-value="value => setOutputVolume(OutputType.SPEAKERS, value)"
   />
   <Knob
     :label="'Headphones volume'"
-    :model-value="headphonesVolume"
-    :min="0"
-    :max="100"
+    :value="headphonesVolume"
+    :min="rmeStore.soundCardConfig.inputRange.min"
+    :max="rmeStore.soundCardConfig.inputRange.max"
     :size="200"
-    @new-value="handleHeadphones"
+    @new-value="value => setOutputVolume(OutputType.HEADPHONES, value)"
   />
 </template>
 

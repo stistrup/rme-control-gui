@@ -1,5 +1,6 @@
 use std::process::Command;
 use std::collections::HashMap;
+use regex::Regex;
 
 pub fn get_card_number_by_name(card_name: &str) -> Result<String, String> {
     let output = Command::new("aplay")
@@ -59,4 +60,24 @@ pub fn get_soundcard_controls(card_index: &str) -> Result<HashMap<String, Vec<St
     }
 
     Ok(controls)
+}
+
+
+pub fn parse_value_from_amixer_output(output: &str) -> Result<i32, String> {
+    let re = Regex::new(r"(?m)^  Mono:( Playback)? (\d+)").unwrap();
+    
+    match re.captures(output) {
+        Some(caps) => {
+            // The volume will always be in the last capture group
+            let volume_str = caps.get(caps.len() - 1).unwrap().as_str();
+            match volume_str.parse::<i32>() {
+                Ok(volume) => Ok(volume),
+                Err(e) => Err(format!("Failed to parse volume as integer: {}", e))
+            }
+        },
+        None => {
+            eprintln!("Failed to parse volume from output: {}", output);
+            Err("Could not parse volume from amixer output".to_string())
+        }
+    }
 }

@@ -1,7 +1,7 @@
 use crate::AppState;
 use std::collections::HashMap;
 use tauri::State;
-use super::{general, routing, switches, volume};
+use super::{general, input_gain, routing, switches, volume};
 
 #[tauri::command]
 pub fn get_soundcard_controls(state: State<AppState>) -> Result<HashMap<String, Vec<String>>, String> {
@@ -16,7 +16,19 @@ pub fn set_routing_volume(state: State<AppState>, source: String, destination: S
 }
 
 #[tauri::command]
-pub fn get_routing_volume(state: State<AppState>, source: String, destination: String) -> Result<f32, String> {
+pub fn get_input_gain(state: State<AppState>, control_name: String) -> Result<i32, String> {
+    let card_number = &state.alsa_card_number;
+    input_gain::get_input_gain(&card_number, &control_name)
+}
+
+#[tauri::command]
+pub fn set_input_gain(state: State<AppState>, control_name: String, gain: i32) -> Result<(), String> {
+    let card_number = &state.alsa_card_number;
+    input_gain::set_input_gain(&card_number, &control_name, gain)
+}
+
+#[tauri::command]
+pub fn get_routing_volume(state: State<AppState>, source: String, destination: String) -> Result<i32, String> {
     let card_number = &state.alsa_card_number;
     routing::get_routing_volume(&card_number, &source, &destination)
 }
@@ -28,9 +40,9 @@ pub fn set_phantom_power(state: State<AppState>, mic: String, new_state: bool) -
 }
 
 #[tauri::command]
-pub fn get_phantom_power_state(state: State<AppState>, mic_name: String) -> Result<bool, String> {
+pub fn get_phantom_power_state(state: State<AppState>, control_name: String) -> Result<bool, String> {
     let card_number = &state.alsa_card_number;
-    switches::get_phantom_power_state(&card_number, &mic_name)
+    switches::get_phantom_power_state(&card_number, &control_name)
 }
 
 #[tauri::command]

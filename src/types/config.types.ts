@@ -19,18 +19,27 @@ export interface AlsaOutput {
   displayName: string;
   controlNameLeft: string;
   controlNameRight: string;
+  routeNameLeft: string;
+  routeNameRight: string
   type: OutputType;
 }
 
 export interface AlsaInputSwitchNames {
   phantom?: string;
   lineSens?: string;
+  gain: string;
   pad?: string;
 }
 
 export interface AlsaInputSwitchValues {
   lineSensHigh: string;
   lineSensLow: string;
+}
+
+
+export interface AlsaInputControlValues {
+  gain: string;
+  pad: string;
 }
 
 export interface SoundcardConfig {

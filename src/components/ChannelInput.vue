@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref } from "vue";
 import Fader from "./Fader.vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
@@ -22,8 +22,10 @@ const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore();
 const routingVolumeMain = ref({left: 0, right: 0});
 const routingVolumeHp = ref({left: 0, right: 0});
-const gain = ref<number | null>(null)
-const gainBoundries = ref<{min: number, max: number} | null>(null)
+const inputGain = ref<number | null>(null)
+
+const volumeBoundries = ref<{min: number, max: number} | null>(null)
+const inputGainBoundries = ref<{min: number, max: number} | null>(null)
 
 const channelIndex = computed(() => {
   const index = rmeStore.inputs.findIndex(input => input.controlName === props.inputChannel.controlName)
@@ -37,12 +39,18 @@ if (!rmeService) {
   throw new Error("Could not load RME service");
 }
 
-const setGain = async (newValue: number) => {
+const getInputGain = async () => {
+  if (channelIndex.value == null) return null
+  const gain = await rmeService.getInputGain(channelIndex.value)
+  return gain ?? null
+}
+
+const setInputGain = async (newValue: number) => {
   console.log('Set gain placeholder:', newValue)
 }
 
 const getOuputRoutingVolume = async (outputType: OutputType) => {
-  if (!channelIndex.value) return null
+  if (channelIndex.value == null) return null
   try {
     const levels = await rmeService.getOutputRoutingVolume(
       channelIndex.value,
@@ -62,7 +70,7 @@ const getOuputRoutingVolume = async (outputType: OutputType) => {
 }
 
 const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
-  if (!channelIndex.value) return
+  if (channelIndex.value == null) return
   const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
   const floatValueExp = applyExponentialCurve(floatValue);
 
@@ -77,8 +85,8 @@ const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
 
 
 const setPhantomState = async () => {
-  if (!channelIndex.value) return
-  if (!props.inputChannel.switcheNames.phantom) return;
+  if (channelIndex.value == null) return
+  if (!props.inputChannel.switchNames.phantom) return;
   const newState = !currentPhantomState.value;
   const result = await rmeService!.setPhantomPower(channelIndex.value, newState);
 
@@ -88,8 +96,8 @@ const setPhantomState = async () => {
 };
 
 const getPhantomState = async () => {
-  if (!channelIndex.value) return null
-  if (!props.inputChannel.switcheNames.phantom) return null;
+  if (channelIndex.value == null) return null
+  if (!props.inputChannel.switchNames.phantom) return null;
 
   const phantomState = await rmeService!.getPhantomState(channelIndex.value);
 
@@ -97,8 +105,8 @@ const getPhantomState = async () => {
 };
 
 const setLineSens = async (newSens: string) => {
-  if (!channelIndex.value) return
-  if (!props.inputChannel.switcheNames.lineSens) return;
+  if (channelIndex.value == null) return
+  if (!props.inputChannel.switchNames.lineSens) return;
   const result = await rmeService!.setLineSensitivity(channelIndex.value, newSens);
   if (result) {
     return newSens ?? null;
@@ -106,8 +114,8 @@ const setLineSens = async (newSens: string) => {
 };
 
 const getLineSens = async () => {
-  if (!channelIndex.value) return null
-  if (!props.inputChannel.switcheNames.lineSens) return null;
+  if (channelIndex.value == null) return null
+  if (!props.inputChannel.switchNames.lineSens) return null;
 
   const newSens = await rmeService!.getLineSensitivity(channelIndex.value);
 
@@ -117,6 +125,11 @@ const getLineSens = async () => {
 onMounted(async () => {
   currentLineSens.value = await getLineSens();
   currentPhantomState.value = await getPhantomState();
+  inputGain.value = await getInputGain();
+
+  inputGainBoundries.value = rmeStore.getControlLimitsByName(props.inputChannel.switchNames.gain)
+
+  console.error(props.inputChannel.displayName,inputGain.value)
 
   const levelsMain = await getOuputRoutingVolume(OutputType.SPEAKERS);
   const levelsHp = await getOuputRoutingVolume(OutputType.HEADPHONES);
@@ -130,57 +143,62 @@ onMounted(async () => {
 <template>
   <div :class="$style.channelContainer">
     <p :class="$style.label">{{ inputChannel.displayName }}</p>
-    <Knob
-      v-if="gain && gainBoundries"
-      label="Gain"
-      :value="gain"
-      :min="gainBoundries.min"
-      :max="gainBoundries.max"
-      @newValue="setGain"
-    />
-    <Knob
-      label="HP volume"
-      :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
-      :min="0"
-      :max="VISUAL_RANGE_MULTIPLIER"
-      :step="1"
-      @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
-    />
-    <Fader
-      label="Main volume"
-      :value="(routingVolumeMain.left + routingVolumeMain.right) / 2"
-      :min="0"
-      :max="VISUAL_RANGE_MULTIPLIER"
-      :step="1"
-      @newValue="value => setOutputRoutingVolume(OutputType.SPEAKERS, value)"
-    />
-    <button
-      v-if="inputChannel.switcheNames.phantom"
-      :class="[$style.phantomButton, { [$style.phantomActive]: currentPhantomState }]"
-      @click="setPhantomState"
-    >
-      48v
-    </button>
-    <!-- This down here isn't pretty -->
-    <div v-if="currentLineSens" :class="$style.lineSensContainer">
-      <button
-        :class="[
-          $style.lineSens,
-          { [$style.lineSensActive]: currentLineSens === rmeStore.soundCardConfig.inputControlValues.lineSensHigh },
-        ]"
-        @click="setLineSens(rmeStore.soundCardConfig.inputControlValues.lineSensHigh)"
-      >
-        {{ rmeStore.soundCardConfig.inputControlValues.lineSensHigh }}
-      </button>
-      <button
-        :class="[
-          $style.lineSens,
-          { [$style.lineSensActive]: currentLineSens === rmeStore.soundCardConfig.inputControlValues.lineSensHigh },
-        ]"
-        @click="setLineSens(rmeStore.soundCardConfig.inputControlValues.lineSensLow)"
-      >
-        {{ rmeStore.soundCardConfig.inputControlValues.lineSensLow }}
-      </button>
+    <div :class="$style.controlsContainer">
+      <Fader
+        label="Main volume"
+        :value="(routingVolumeMain.left + routingVolumeMain.right) / 2"
+        :min="0"
+        :max="VISUAL_RANGE_MULTIPLIER"
+        :step="1"
+        @newValue="value => setOutputRoutingVolume(OutputType.SPEAKERS, value)"
+      />
+      <div :class="$style.inputControls">
+  
+        <Knob
+          v-if="inputGain !== null && inputGainBoundries"
+          label="Gain"
+          :value="inputGain"
+          :min="inputGainBoundries.min"
+          :max="inputGainBoundries.max"
+          @newValue="setInputGain"
+        />
+        <Knob
+          label="HP volume"
+          :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
+          :min="0"
+          :max="VISUAL_RANGE_MULTIPLIER"
+          :step="1"
+          @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
+        />
+        <button
+          v-if="inputChannel.switchNames.phantom"
+          :class="[$style.phantomButton, { [$style.phantomActive]: currentPhantomState }]"
+          @click="setPhantomState"
+        >
+          48v
+        </button>
+        <!-- This down here isn't pretty -->
+        <div v-if="currentLineSens" :class="$style.lineSensContainer">
+          <button
+            :class="[
+              $style.lineSens,
+              { [$style.lineSensActive]: currentLineSens === rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh },
+            ]"
+            @click="setLineSens(rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh)"
+          >
+            {{ rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh }}
+          </button>
+          <button
+            :class="[
+              $style.lineSens,
+              { [$style.lineSensActive]: currentLineSens === rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh },
+            ]"
+            @click="setLineSens(rmeStore.soundCardConfig.inputSwitchValues.lineSensLow)"
+          >
+            {{ rmeStore.soundCardConfig.inputSwitchValues.lineSensLow }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -191,6 +209,14 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 20px;
+}
+
+.controlsContainer{
+  display: flex;
+}
+
+.inputControls{
+
 }
 
 .phantomButton {

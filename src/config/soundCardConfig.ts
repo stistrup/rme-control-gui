@@ -17,7 +17,8 @@ export const babyfaceProConf: SoundcardConfig = {
             controlName: "Mic-AN1",
             type: InputType.MIC,
             switchNames: {
-                phantom: "Mic-AN1 48V"
+                phantom: "Mic-AN1 48V",
+                gain: "Mic-AN1 Gain"
             }
         },
         {
@@ -25,7 +26,8 @@ export const babyfaceProConf: SoundcardConfig = {
             controlName: "Mic-AN2",
             type: InputType.MIC,
             switchNames: {
-                phantom: "Mic-AN2 48V"
+                phantom: "Mic-AN2 48V",
+                gain: "Mic-AN2 Gain"
             }
         },
         {
@@ -34,6 +36,7 @@ export const babyfaceProConf: SoundcardConfig = {
             type: InputType.LINE,
             switchNames: {
                 lineSens: "Sens.",
+                gain: "Line-IN3 Gain"
             }
         },
         {
@@ -42,6 +45,7 @@ export const babyfaceProConf: SoundcardConfig = {
             type: InputType.LINE,
             switchNames: {
                 lineSens: "Sens.",
+                gain: "Line-IN4 Gain"
             }
         }
     ],
@@ -50,12 +54,16 @@ export const babyfaceProConf: SoundcardConfig = {
             displayName: "Main Output",
             controlNameLeft: "Main-Out AN1",
             controlNameRight: "Main-Out AN2",
+            routeNameLeft: "AN1",
+            routeNameRight: "AN2",
             type: OutputType.SPEAKERS
         },
         {
             displayName: "Headphones",
             controlNameLeft: "Main-Out PH3",
             controlNameRight: "Main-Out PH4",
+            routeNameLeft: "PH3",
+            routeNameRight: "PH4",
             type: OutputType.HEADPHONES
         }
     ],

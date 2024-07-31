@@ -1,19 +1,16 @@
-use super::volume;
-
+use super::general;
 use std::process::Command;
 
-pub fn set_routing_volume(card_index: &str, channel: &str, destination: &str, level: f32) -> Result<(), String> {
-
-    let clamped_level = (level * 100.0).clamp(0.0, 100.0) as i32;
+pub fn set_routing_volume(card_index: &str, source: &str, destination: &str, level: f32) -> Result<(), String> {
 
     // Construct the control name using both channel and destination
-    let control_name = format!("{}-{}", channel, destination);
+    let control_name = format!("{}-{}", source, destination);
 
     let output = Command::new("amixer")
         .args(&[
             "-c", &card_index,
             "set", &control_name,
-            &format!("{}%", clamped_level),
+            &format!("{}", level),
         ])
         .output()
         .map_err(|e| e.to_string())?;
@@ -25,10 +22,10 @@ pub fn set_routing_volume(card_index: &str, channel: &str, destination: &str, le
     }
 }
 
-pub fn get_routing_volume(card_index: &str, channel: &str, destination: &str) -> Result<f32, String> {
+pub fn get_routing_volume(card_index: &str, source: &str, destination: &str) -> Result<i32, String> {
 
     // Construct the control name using both channel and destination
-    let control_name = format!("{}-{}", channel, destination);
+    let control_name = format!("{}-{}", source, destination);
 
     let output = Command::new("amixer")
         .args(&["-c", &card_index, "get", &control_name])
@@ -37,8 +34,8 @@ pub fn get_routing_volume(card_index: &str, channel: &str, destination: &str) ->
 
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        let volume = volume::parse_volume_from_amixer_output(&stdout)?;
-        Ok(volume as f32 / 100.0)
+        let volume = general::parse_value_from_amixer_output(&stdout)?;
+        Ok(volume)
     } else {
         Err(String::from_utf8_lossy(&output.stderr).to_string())
     }
