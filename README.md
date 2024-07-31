@@ -4,8 +4,7 @@ A graphical interface interfacing with ALSA and Pipewire to give easy control to
 
 A fun little project to learn tauri and rust. Design will most likely look different later but i have some functionality i want to sort out first. 
 
-
-![image](https://github.com/user-attachments/assets/985ebc1a-e46f-4d50-9327-f98402b89b11)
+![image](https://github.com/user-attachments/assets/fc96673a-93bd-4a8b-8bd1-d39d6ae1755e)
 
 
 # Tauri + Vue + TypeScript
