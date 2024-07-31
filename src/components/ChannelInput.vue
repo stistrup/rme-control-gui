@@ -71,14 +71,14 @@ const getOuputRoutingVolume = async (outputType: OutputType) => {
 
 const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
   if (channelIndex.value == null) return
-  const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
-  const floatValueExp = applyExponentialCurve(floatValue);
+  // const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
+  // const floatValueExp = applyExponentialCurve(floatValue);
 
   const outputIndex = rmeStore.soundCardConfig.outputs.findIndex(output => output.type === outputType)
 
   if (outputIndex !== -1) {
     rmeService
-      .setOutputRoutingVolume( channelIndex.value, outputIndex, floatValueExp)
+      .setOutputRoutingVolume(channelIndex.value, outputIndex, newValue)
       .catch((error) => console.error("Failed to set main send level:", error));
   }
 };
@@ -127,9 +127,11 @@ onMounted(async () => {
   currentPhantomState.value = await getPhantomState();
   inputGain.value = await getInputGain();
 
-  inputGainBoundries.value = rmeStore.getControlLimitsByName(props.inputChannel.switchNames.gain)
+  const gainBoundries = rmeStore.getControlByName(props.inputChannel.switchNames.gain)
+  const volBoundries = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME:
 
-  console.error(props.inputChannel.displayName,inputGain.value)
+  inputGainBoundries.value = gainBoundries.limits
+  volumeBoundries.value = volBoundries.limits
 
   const levelsMain = await getOuputRoutingVolume(OutputType.SPEAKERS);
   const levelsHp = await getOuputRoutingVolume(OutputType.HEADPHONES);
@@ -145,10 +147,11 @@ onMounted(async () => {
     <p :class="$style.label">{{ inputChannel.displayName }}</p>
     <div :class="$style.controlsContainer">
       <Fader
+        v-if="volumeBoundries"
         label="Main volume"
         :value="(routingVolumeMain.left + routingVolumeMain.right) / 2"
-        :min="0"
-        :max="VISUAL_RANGE_MULTIPLIER"
+        :min="volumeBoundries.min"
+        :max="volumeBoundries.max"
         :step="1"
         @newValue="value => setOutputRoutingVolume(OutputType.SPEAKERS, value)"
       />
@@ -163,11 +166,11 @@ onMounted(async () => {
           @newValue="setInputGain"
         />
         <Knob
+          v-if="volumeBoundries"
           label="HP volume"
           :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
-          :min="0"
-          :max="VISUAL_RANGE_MULTIPLIER"
-          :step="1"
+          :min="volumeBoundries.min"
+          :max="volumeBoundries.max"
           @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
         />
         <button

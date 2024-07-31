@@ -20,7 +20,7 @@ export const formatControls = (
       } else if (line.includes("Playback channels:")) {
         control.channels = line.split(":")[1].trim();
       } else if (line.includes("Limits:")) {
-        const limits = line.match(/Playback (\d+) - (\d+)/);
+        const limits = line.match(/Limits:(?:\s*Playback)?\s*(\d+)\s*-\s*(\d+)/);
         if (limits) {
           control.limits.min = parseInt(limits[1]);
           control.limits.max = parseInt(limits[2]);
@@ -32,7 +32,7 @@ export const formatControls = (
       ) {
         const parts = line.split(":");
         const channel = parts[0].trim();
-        const valueMatch = parts[1].match(/Playback (\d+) \[(\d+)%\]/);
+        const valueMatch = parts[1].match(/(?:Playback\s*)?(\d+)\s*\[(\d+)%\]/);
         if (valueMatch) {
           control.values[channel] = parseInt(valueMatch[1]);
         }

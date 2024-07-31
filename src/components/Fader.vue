@@ -8,11 +8,7 @@ interface FaderProps {
   value: number;
 }
 
-const props = withDefaults(defineProps<FaderProps>(), {
-  min: -60,
-  max: 12,
-  step: 1,
-});
+const props = defineProps<FaderProps>()
 
 const emit = defineEmits(["newValue"]);
 
@@ -52,7 +48,7 @@ function drag(event: MouseEvent) {
 
   let newValue = startValue.value - (deltaY / faderHeight) * range;
   newValue = Math.max(props.min, Math.min(props.max, newValue));
-  newValue = Math.round(newValue / props.step) * props.step;
+  newValue = Math.round(newValue);
 
   localValue.value = newValue;
   emit("newValue", newValue);

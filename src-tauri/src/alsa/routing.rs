@@ -1,7 +1,7 @@
 use super::general;
 use std::process::Command;
 
-pub fn set_routing_volume(card_index: &str, source: &str, destination: &str, level: f32) -> Result<(), String> {
+pub fn set_routing_volume(card_index: &str, source: &str, destination: &str, level: i32) -> Result<(), String> {
 
     // Construct the control name using both channel and destination
     let control_name = format!("{}-{}", source, destination);

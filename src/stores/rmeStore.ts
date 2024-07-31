@@ -25,12 +25,11 @@ export const useRmeStore = defineStore("rme", () => {
   };
 
   const setControls = (newControls: AudioControls) => {
-    console.error(newControls)
     alsaControls.value = newControls;
   };
 
-  const getControlLimitsByName = (controlName: string) => {
-    return alsaControls.value[controlName]?.limits
+  const getControlByName = (controlName: string) => {
+    return alsaControls.value[controlName]
   }
 
   const setSupportedProfiles = (profiles: string[]) => {
@@ -51,7 +50,7 @@ export const useRmeStore = defineStore("rme", () => {
     outputs,
     soundCardConfig,
     supportedProfiles,
-    getControlLimitsByName,
+    getControlByName,
     setActiveProfile,
     setControls,
     setSupportedProfiles,

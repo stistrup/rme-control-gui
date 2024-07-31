@@ -306,15 +306,17 @@ export class RmeService {
       return
     }
 
+    console.log(input.controlName, output.routeNameLeft)
+
     try {
       await invoke("set_routing_volume", {
         source: input.controlName,
-        destination: output.controlNameLeft,
+        destination: output.routeNameLeft,
         level,
       });
       await invoke("set_routing_volume", {
         source: input.controlName,
-        destination: output.controlNameRight,
+        destination: output.routeNameRight,
         level,
       });
     } catch (error) {

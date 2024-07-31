@@ -10,7 +10,7 @@ pub fn get_soundcard_controls(state: State<AppState>) -> Result<HashMap<String, 
 }
 
 #[tauri::command]
-pub fn set_routing_volume(state: State<AppState>, source: String, destination: String, level: f32) -> Result<(), String> {
+pub fn set_routing_volume(state: State<AppState>, source: String, destination: String, level: i32) -> Result<(), String> {
     let card_number = &state.alsa_card_number;
     routing::set_routing_volume(&card_number, &source, &destination, level)
 }
