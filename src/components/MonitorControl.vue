@@ -2,12 +2,13 @@
 import { inject, onMounted, ref } from "vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
-import {
-  applyExponentialCurve,
-  removeExponentialCurve,
-} from "../utils/logConvertion";
+// import {
+//   applyExponentialCurve,
+//   removeExponentialCurve,
+// } from "../utils/logConvertion";
 import { AlsaOutput, OutputType } from "../types/config.types";
 import { useRmeStore } from "../stores/rmeStore";
+import { alsaToDB } from "../utils/alsaValConversion";
 
 interface MonitorControlProps {
   outputs: AlsaOutput[];
@@ -42,8 +43,10 @@ onMounted(async () => {
 
   // const monitorLinear = removeExponentialCurve(monitorAvarage / 100);
   // const hpLinear = removeExponentialCurve(hpAvarage / 100);
-  monitorVolume.value = monitorAvarage
-  headphonesVolume.value = hpAvarage;
+  console.log(alsaToDB(hpAvarage))
+  console.log(alsaToDB(monitorAvarage))
+  monitorVolume.value = alsaToDB(monitorAvarage)
+  headphonesVolume.value = alsaToDB(hpAvarage);
 });
 </script>
 
@@ -51,16 +54,16 @@ onMounted(async () => {
   <Knob
     :label="'Monitor volume'"
     :value="monitorVolume"
-    :min="rmeStore.soundCardConfig.inputRange.min"
-    :max="rmeStore.soundCardConfig.inputRange.max"
+    :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
+    :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
     :size="200"
     @new-value="value => setOutputVolume(OutputType.SPEAKERS, value)"
   />
   <Knob
     :label="'Headphones volume'"
     :value="headphonesVolume"
-    :min="rmeStore.soundCardConfig.inputRange.min"
-    :max="rmeStore.soundCardConfig.inputRange.max"
+    :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
+    :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
     :size="200"
     @new-value="value => setOutputVolume(OutputType.HEADPHONES, value)"
   />

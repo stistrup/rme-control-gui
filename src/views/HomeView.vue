@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Mixer from "../components/Mixer.vue";
-import MonitorControls from "../components/MonitorControls.vue";
 import AudioSettings from "../components/AudioSettings.vue";
 import { useRmeStore } from "../stores/rmeStore";
 

@@ -3,6 +3,7 @@ import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
 import { invoke } from "@tauri-apps/api/core";
 import { OutputType } from "../types/config.types";
+import { alsaToDB, dbToALSA } from "../utils/alsaValConversion";
 
 export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
@@ -72,7 +73,7 @@ export class RmeService {
         destination: output.routeNameRight,
       })) as number;
 
-      return { left, right };
+      return { left: alsaToDB(left), right: alsaToDB(right) };
     } catch (error) {
       console.error(
         `Failed to fetch send level for ${this.store.soundCardConfig.inputs[inputIndex].displayName}:`,
@@ -199,7 +200,8 @@ export class RmeService {
       const right = (await invoke("get_alsa_volume", {
         controlName: output.controlNameRight,
       })) as number;
-      return { left, right };
+
+      return { left: alsaToDB(left), right: alsaToDB(right) };
     } catch (error) {
       console.error("Failed to output volume:", error);
       throw error;
@@ -304,18 +306,18 @@ export class RmeService {
       return
     }
 
-    console.log(input.controlName, output.routeNameLeft)
+    const alsaValue = dbToALSA(level)
 
     try {
       await invoke("set_routing_volume", {
         source: input.controlName,
         destination: output.routeNameLeft,
-        level,
+        level: alsaValue,
       });
       await invoke("set_routing_volume", {
         source: input.controlName,
         destination: output.routeNameRight,
-        level,
+        level: alsaValue,
       });
     } catch (error) {
       console.error(
@@ -339,18 +341,19 @@ export class RmeService {
       return
     }
 
-    await this.setVolume(output.controlNameLeft, volume);
-    await this.setVolume(output.controlNameRight, volume);
-  };
+    const alsaValue = dbToALSA(volume)
 
-  public setVolume = async (controlName: string, volume: number) => {
     try {
       await invoke("set_alsa_volume", {
-        controlName,
-        volume,
+        controlName: output.controlNameLeft,
+        volume: alsaValue,
+      });
+      await invoke("set_alsa_volume", {
+        controlName: output.controlNameRight,
+        volume: alsaValue,
       });
     } catch (error) {
-      console.error(`Error setting volume for ${controlName}:`, error);
+      console.error(`Error setting volume`, error);
     }
   };
 }

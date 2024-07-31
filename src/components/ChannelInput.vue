@@ -4,19 +4,18 @@ import Fader from "./Fader.vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
 import { useRmeStore } from "../stores/rmeStore";
-import {
-  applyExponentialCurve,
-  removeExponentialCurve,
-} from "../utils/logConvertion";
+// import {
+//   applyExponentialCurve,
+//   removeExponentialCurve,
+// } from "../utils/logConvertion";
 import { AlsaInput, OutputType } from "../types/config.types";
+import { alsaToDB } from "../utils/alsaValConversion";
 
 interface ChannelProps {
   inputChannel: AlsaInput;
 }
 
 const props = defineProps<ChannelProps>();
-
-const VISUAL_RANGE_MULTIPLIER = 100;
 
 const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore();
@@ -58,9 +57,9 @@ const getOuputRoutingVolume = async (outputType: OutputType) => {
     );
 
     if (levels) {
-      const left = removeExponentialCurve(levels.left);
-      const right = removeExponentialCurve(levels.left);
-      return {left, right};
+      // const left = removeExponentialCurve(levels.left);
+      // const right = removeExponentialCurve(levels.left);
+      return {left: levels.left, right: levels.right};
     }
     return null
   } catch (error) {
@@ -109,7 +108,7 @@ const setLineSens = async (newSens: string) => {
   if (!props.inputChannel.switchNames.lineSens) return;
   const result = await rmeService!.setLineSensitivity(channelIndex.value, newSens);
   if (result) {
-    return newSens ?? null;
+    currentLineSens.value = newSens
   }
 };
 
@@ -128,10 +127,13 @@ onMounted(async () => {
   inputGain.value = await getInputGain();
 
   const gainBoundries = rmeStore.getControlByName(props.inputChannel.switchNames.gain)
-  const volBoundries = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME:
+  const volBoundriesAlsa = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME:
+
+  const volBoundriesDbMin = alsaToDB(volBoundriesAlsa.limits.min)
+  const volBoundriesDbMax = alsaToDB(volBoundriesAlsa.limits.max)
 
   inputGainBoundries.value = gainBoundries.limits
-  volumeBoundries.value = volBoundries.limits
+  volumeBoundries.value = {min: volBoundriesDbMin, max: volBoundriesDbMax}
 
   const levelsMain = await getOuputRoutingVolume(OutputType.SPEAKERS);
   const levelsHp = await getOuputRoutingVolume(OutputType.HEADPHONES);
@@ -139,16 +141,19 @@ onMounted(async () => {
   if (levelsMain) routingVolumeMain.value = levelsMain
   if (levelsHp) routingVolumeHp.value = levelsHp
 
+  console.log(props.inputChannel.displayName, levelsMain, levelsHp)
+  console.log('boundries', volumeBoundries.value)
+
 });
 </script>
 
 <template>
-  <div :class="$style.channelContainer">
+  <div :class="[$style.channelContainer, { [$style.firstChannel]: channelIndex === 0 }]">
     <p :class="$style.label">{{ inputChannel.displayName }}</p>
     <div :class="$style.controlsContainer">
       <Fader
         v-if="volumeBoundries"
-        label="Main volume"
+        label="Speakers"
         :value="(routingVolumeMain.left + routingVolumeMain.right) / 2"
         :min="volumeBoundries.min"
         :max="volumeBoundries.max"
@@ -167,7 +172,7 @@ onMounted(async () => {
         />
         <Knob
           v-if="volumeBoundries"
-          label="HP volume"
+          label="Headphones"
           :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
           :min="volumeBoundries.min"
           :max="volumeBoundries.max"
@@ -194,7 +199,7 @@ onMounted(async () => {
           <button
             :class="[
               $style.lineSens,
-              { [$style.lineSensActive]: currentLineSens === rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh },
+              { [$style.lineSensActive]: currentLineSens === rmeStore.soundCardConfig.inputSwitchValues.lineSensLow },
             ]"
             @click="setLineSens(rmeStore.soundCardConfig.inputSwitchValues.lineSensLow)"
           >
@@ -208,10 +213,18 @@ onMounted(async () => {
 
 <style module>
 .channelContainer {
+  --channel-border-color: rgb(190, 190, 190);
+
+  border-right: 1px solid var(--channel-border-color);
+  padding: 0 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
+
+  &.firstChannel{
+    border-left: 1px solid var(--channel-border-color);
+  }
 }
 
 .controlsContainer{
@@ -219,10 +232,12 @@ onMounted(async () => {
 }
 
 .inputControls{
-
+  display: flex;
+  flex-direction: column;
 }
 
 .phantomButton {
+  margin: 20px auto;
   background-color: #3a3a3a;
   border: unset;
   border-radius: 4px;
@@ -236,12 +251,17 @@ onMounted(async () => {
 }
 
 .lineSensContainer {
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 3px;
+
   .lineSens {
     background-color: #3a3a3a;
     border: unset;
     border-radius: 4px;
+    width: 60px;
     color: #aaaaaa;
     filter: opacity(0.6);
 
@@ -250,5 +270,9 @@ onMounted(async () => {
       filter: unset;
     }
   }
+}
+
+button {
+  cursor: pointer;
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 
 interface FaderProps {
   label: string;
@@ -8,7 +8,7 @@ interface FaderProps {
   value: number;
 }
 
-const props = defineProps<FaderProps>()
+const props = defineProps<FaderProps>();
 
 const emit = defineEmits(["newValue"]);
 
@@ -48,7 +48,7 @@ function drag(event: MouseEvent) {
 
   let newValue = startValue.value - (deltaY / faderHeight) * range;
   newValue = Math.max(props.min, Math.min(props.max, newValue));
-  newValue = Math.round(newValue);
+  newValue = Math.round(newValue * 2) / 2; // Round to nearest 0.5
 
   localValue.value = newValue;
   emit("newValue", newValue);
@@ -67,6 +67,11 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("mousemove", drag);
   window.removeEventListener("mouseup", stopDrag);
+});
+
+// Watch for changes in the prop value
+watch(() => props.value, (newValue) => {
+  localValue.value = newValue;
 });
 </script>
 
@@ -87,11 +92,12 @@ onUnmounted(() => {
         <div :class="$style.handleLine"></div>
       </div>
     </div>
-    <span :class="$style.label">{{ label }}</span>
-    <span :class="$style.value">{{ Math.round(localValue) }}</span>
+    <div :class="$style.valueContainer">
+      <span :class="$style.label">{{ label }}</span>
+      <span :class="$style.value">{{ localValue.toFixed(1) }} dB</span>
+    </div>
   </div>
 </template>
-
 <style module>
 .control {
   display: flex;
@@ -141,17 +147,25 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
 }
-.label {
-  color: #303030;
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-}
-.value {
-  color: #505050;
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 400;
+
+.valueContainer{
+  margin-top: 35px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .label {
+    color: #303030;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+  }
+  .value {
+    color: #505050;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 400;
+  }
 }
 </style>

@@ -132,7 +132,7 @@ onUnmounted(() => {
       ></div>
     </div>
     <span :class="$style.label">{{ label }}</span>
-    <span :class="$style.value">{{ Math.round(localValue) }}</span>
+    <span :class="$style.value">{{ Math.round(localValue) === -65 ? "-inf" : Math.round(localValue) }} dB</span>
   </div>
 </template>
 
