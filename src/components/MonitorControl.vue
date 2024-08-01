@@ -2,10 +2,6 @@
 import { inject, onMounted, ref } from "vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
-// import {
-//   applyExponentialCurve,
-//   removeExponentialCurve,
-// } from "../utils/logConvertion";
 import { AlsaOutput, OutputType } from "../types/config.types";
 import { useRmeStore } from "../stores/rmeStore";
 import { alsaToDB } from "../utils/alsaValConversion";
@@ -27,8 +23,6 @@ const monitorVolume = ref(0);
 const headphonesVolume = ref(0);
 
 const setOutputVolume = (outputType: OutputType, volume: number) => {
-  // const monitorExpFloat = applyExponentialCurve(volume / 100);
-  // const monitorExp = Math.floor(monitorExpFloat * 100);
   rmeService.setOutputVolume(outputType, volume);
 };
 
@@ -41,12 +35,8 @@ onMounted(async () => {
   const monitorAvarage = (monitor.left + monitor.right) / 2;
   const hpAvarage = (hp.left + hp.right) / 2;
 
-  // const monitorLinear = removeExponentialCurve(monitorAvarage / 100);
-  // const hpLinear = removeExponentialCurve(hpAvarage / 100);
-  console.log(alsaToDB(hpAvarage))
-  console.log(alsaToDB(monitorAvarage))
-  monitorVolume.value = alsaToDB(monitorAvarage)
-  headphonesVolume.value = alsaToDB(hpAvarage);
+  monitorVolume.value = monitorAvarage
+  headphonesVolume.value = hpAvarage;
 });
 </script>
 
