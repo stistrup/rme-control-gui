@@ -25,12 +25,26 @@ const monitorVolumeRight = ref(0);
 const headphonesVolume = ref(0);
 
 const setOutputVolume = (outputType: OutputType, volume: number) => {
-  rmeService.setOutputVolume(outputType, volume);
+  const output = rmeStore.soundCardConfig.outputs.find(output => output.type === outputType)
+
+  if (!output){
+    console.error('Could not find output in config')
+    return
+  }
+
+  rmeService.setAlsaVolumeStereo(output.controlNameLeft, output.controlNameRight, volume);
 };
 
 onMounted(async () => {
-  const monitor = await rmeService.getOutputVolume(OutputType.SPEAKERS);
-  const hp = await rmeService.getOutputVolume(OutputType.HEADPHONES);
+  const outputMonitor = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.SPEAKERS)
+  const outputHeadphones = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.HEADPHONES)
+  if (!outputMonitor || !outputHeadphones){
+    console.error('Could not find outputs in config')
+    return
+  }
+
+  const monitor = await rmeService.getAlsaVolumeStereo(outputMonitor.controlNameLeft, outputMonitor.controlNameRight);
+  const hp = await rmeService.getAlsaVolumeStereo(outputHeadphones.controlNameLeft, outputHeadphones.controlNameRight);
 
   if (!hp || !monitor) return;
 
@@ -55,6 +69,7 @@ onMounted(async () => {
           :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
           :stereo="true"
           :value-right="monitorVolumeRight"
+          @new-value="value => setOutputVolume(OutputType.SPEAKERS, value)"
         />
       </div>
       <Knob

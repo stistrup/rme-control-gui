@@ -18,7 +18,7 @@ const bufferSizes = [32, 64, 128, 256, 512, 1024, 2048];
 
 const setAudioProfile = () => {
   if (!selectedAudioProfile.value) return
-  rmeService.setPipewireProfile(selectedAudioProfile.value)
+  rmeService.setActiveProfile(selectedAudioProfile.value)
 };
 
 const setBufferSize = () => {

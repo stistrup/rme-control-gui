@@ -14,32 +14,27 @@ defineProps<MonitorControlProps>();
 
 const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore()
+const controlLeft = rmeStore.soundCardConfig.playback.controlNameLeft
+const controlRight = rmeStore.soundCardConfig.playback.controlNameRight
 
 if (!rmeService) {
   throw new Error("Could not inject RME service");
 }
 
-const monitorVolumeLeft = ref(0);
-const monitorVolumeRight = ref(0);
-const headphonesVolume = ref(0);
+const playbackVolume = ref(0);
 
-const setOutputVolume = (outputType: OutputType, volume: number) => {
-  rmeService.setOutputVolume(outputType, volume);
+const setPlaybackVolume = (volume: number) => {
+  rmeService.setAlsaVolumeStereo(controlLeft, controlRight, volume);
 };
 
 onMounted(async () => {
-  const monitor = await rmeService.getOutputVolume(OutputType.SPEAKERS);
-  const hp = await rmeService.getOutputVolume(OutputType.HEADPHONES);
+  const playback = await rmeService.getAlsaVolumeStereo(controlLeft, controlRight);
 
-  if (!hp || !monitor) return;
+  if (!playback) return;
 
-  const hpAvarage = (hp.left + hp.right) / 2;
+  const playBackAvarage = (playback.left + playback.right) / 2;
 
-  monitorVolumeLeft.value = monitor.left
-  monitorVolumeRight.value = monitor.right
-  headphonesVolume.value = hpAvarage;
-
-  console.log(monitorVolumeLeft.value, monitorVolumeRight.value)
+  playbackVolume.value = playBackAvarage
 });
 </script>
 
@@ -47,11 +42,10 @@ onMounted(async () => {
   <div :class="$style.playbackControl">
     <p :class="$style.label">{{ playbackChannel.displayName }}</p>
     <Fader 
-      :value="monitorVolumeLeft" 
+      :value="playbackVolume" 
       :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
       :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
-      :stereo="true"
-      :value-right="monitorVolumeRight"
+      @new-value="setPlaybackVolume"
     />
   </div>
 </template>

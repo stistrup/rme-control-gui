@@ -10,6 +10,7 @@ import { useRmeStore } from "../stores/rmeStore";
 // } from "../utils/logConvertion";
 import { AlsaInput, InputType, OutputType } from "../types/config.types";
 import { alsaToDB } from "../utils/alsaValConversion";
+import { formatRoutingControlName } from "../utils/bbfproControlName";
 
 interface ChannelProps {
   inputChannel: AlsaInput;
@@ -40,7 +41,7 @@ if (!rmeService) {
 
 const getInputGain = async () => {
   if (channelIndex.value == null) return null
-  let gain = await rmeService.getInputGain(channelIndex.value)
+  let gain = await rmeService.getInputGain(props.inputChannel.switchNames.gain)
 
   if (gain && props.inputChannel.type === InputType.LINE) gain = gain / 2
 
@@ -49,41 +50,34 @@ const getInputGain = async () => {
 
 const setInputGain = async (newValue: number) => {
   if (props.inputChannel.type === InputType.LINE) newValue = newValue * 2
-  console.log('Set gain placeholder:', newValue)
+  rmeService.setInputGain(props.inputChannel.switchNames.gain, newValue)
 }
 
 const getOuputRoutingVolume = async (outputType: OutputType) => {
-  if (channelIndex.value == null) return null
-  try {
-    const levels = await rmeService.getOutputRoutingVolume(
-      channelIndex.value,
-      outputType
-    );
+  
+  const controlNames = formatRoutingControlName(
+    props.inputChannel.controlName, 
+    outputType, 
+    rmeStore.soundCardConfig.outputs
+  )
+  if(!controlNames) return
 
-    if (levels) {
-      // const left = removeExponentialCurve(levels.left);
-      // const right = removeExponentialCurve(levels.left);
-      return {left: levels.left, right: levels.right};
-    }
-    return null
-  } catch (error) {
-    console.error("Failed to get main send level:", error);
-    return null
-  }
+  const levels = await rmeService.getAlsaVolumeStereo(
+    controlNames.left,
+    controlNames.right
+  );
+  if (!levels) return
+
+
+  return {left: levels.left, right: levels.right};
 }
 
 const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
-  if (channelIndex.value == null) return
-  // const floatValue = newValue / VISUAL_RANGE_MULTIPLIER;
-  // const floatValueExp = applyExponentialCurve(floatValue);
 
-  const outputIndex = rmeStore.soundCardConfig.outputs.findIndex(output => output.type === outputType)
+  const controlNames = formatRoutingControlName(props.inputChannel.controlName, outputType,rmeStore.soundCardConfig.outputs)
+  if(!controlNames) return
 
-  if (outputIndex !== -1) {
-    rmeService
-      .setOutputRoutingVolume(channelIndex.value, outputIndex, newValue)
-      .catch((error) => console.error("Failed to set main send level:", error));
-  }
+  rmeService.setAlsaVolumeStereo(controlNames.left, controlNames.right, newValue)
 };
 
 
@@ -138,8 +132,6 @@ onMounted(async () => {
 
   const volBoundriesDbMin = alsaToDB(volBoundriesAlsa.limits.min)
   const volBoundriesDbMax = alsaToDB(volBoundriesAlsa.limits.max)
-
-
 
   inputGainBoundries.value = inputControls.limits
   volumeBoundries.value = {min: volBoundriesDbMin, max: volBoundriesDbMax}
@@ -271,9 +263,10 @@ onMounted(async () => {
     background-color: #3a3a3a;
     border: unset;
     border-radius: 4px;
-    width: 53px;
+    width: 48px;
     color: #aaaaaa;
     filter: opacity(0.6);
+    font-size: 11px;
 
     &.lineSensActive {
       color: #f5f5f5;

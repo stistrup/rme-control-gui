@@ -1,3 +1,6 @@
+
+const EXPONENT = 2.5
+
 /**
  * Apply an exponential curve to a value.
  * @param value The input value, which can be any number within the range [min, max].
@@ -10,13 +13,12 @@ export function applyExponentialCurve(
   value: number,
   min: number,
   max: number,
-  exponent: number = 2
 ): number {
   // Normalize the value to [0, 1]
   const normalizedValue = (value - min) / (max - min);
   
   // Apply the exponential curve
-  const curvedValue = Math.pow(normalizedValue, exponent);
+  const curvedValue = Math.pow(normalizedValue, EXPONENT);
   
   // Denormalize back to the original range
   return curvedValue * (max - min) + min;
@@ -34,13 +36,12 @@ export function removeExponentialCurve(
   value: number,
   min: number,
   max: number,
-  exponent: number = 2
 ): number {
   // Normalize the value to [0, 1]
   const normalizedValue = (value - min) / (max - min);
   
   // Apply the inverse of the exponential curve
-  const linearValue = Math.pow(normalizedValue, 1 / exponent);
+  const linearValue = Math.pow(normalizedValue, 1 / EXPONENT);
   
   // Denormalize back to the original range
   return linearValue * (max - min) + min;
