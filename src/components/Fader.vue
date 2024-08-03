@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { applyExponentialCurve, removeExponentialCurve } from "../utils/expConvertion";
+import FaderThumb from "./FaderThumb.vue";
 
 interface FaderProps {
   min: number;
@@ -102,13 +103,11 @@ const displayValue = computed(() => {
             :style="{ top: `${zeroPosition}%` }"
           ></div>
         </div>
-        <div
-          :class="$style.faderHandle"
+        <FaderThumb
+          :class="$style.faderThumbComponent"
           :style="{ top: `${faderPosition}%` }"
           @mousedown.prevent="startDrag"
-        >
-          <div :class="$style.handleLine"></div>
-        </div>
+        />
     </div>
     <div :class="$style.valueContainer">
       <span :class="$style.value">{{ displayValue === -65 ? "-inf" : displayValue }} dB</span>
@@ -141,17 +140,17 @@ const displayValue = computed(() => {
   background-color: #3a3a3a;
   border-radius: 2px;
 }
-.faderHandle {
+.faderThumbComponent {
   position: absolute;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 40px;
+  /* width: 40px;
   height: 70px;
   background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
   border-radius: 4px;
   cursor: ns-resize;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  user-select: none;
+  user-select: none; */
 }
 .handleLine {
   position: absolute;

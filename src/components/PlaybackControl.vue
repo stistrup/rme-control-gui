@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from "vue";
 import Fader from "./Fader.vue"
 import { RmeService } from "../services/RmeService";
-import { AlsaPlayback, OutputType } from "../types/config.types";
+import { AlsaPlayback } from "../types/config.types";
 import { useRmeStore } from "../stores/rmeStore";
 import { alsaToDB } from "../utils/alsaValConversion";
 
