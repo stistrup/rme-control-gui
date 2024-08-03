@@ -2,6 +2,7 @@
 import { useRmeStore } from "../stores/rmeStore";
 import ChannelInput from "./ChannelInput.vue";
 import MonitorControl from "./MonitorControl.vue";
+import PlaybackControl from "./PlaybackControl.vue";
 
 const rmeStore = useRmeStore();
 </script>
@@ -14,6 +15,9 @@ const rmeStore = useRmeStore();
         :inputChannel="channel"
         :key="channel.controlName"
       />
+    </div>
+    <div :class="$style.playback">
+      <PlaybackControl :playbackChannel="rmeStore.playback"/>
     </div>
     <div :class="$style.channelOutputs">
       <MonitorControl

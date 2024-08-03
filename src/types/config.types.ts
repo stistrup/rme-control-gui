@@ -24,6 +24,12 @@ export interface AlsaOutput {
   type: OutputType;
 }
 
+export interface AlsaPlayback {
+  displayName: string;
+  controlNameLeft: string;
+  controlNameRight: string;
+}
+
 export interface AlsaInputSwitchNames {
   phantom?: string;
   lineSens?: string;
@@ -45,6 +51,7 @@ export interface AlsaInputControlValues {
 export interface SoundcardConfig {
   inputs: AlsaInput[];
   outputs: AlsaOutput[];
+  playback: AlsaPlayback;
   inputSwitchValues: AlsaInputSwitchValues;
   inputRange: InputRange
 }

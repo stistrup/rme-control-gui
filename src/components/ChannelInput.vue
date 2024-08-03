@@ -162,7 +162,6 @@ onMounted(async () => {
     <div :class="$style.controlsContainer">
       <Fader
         v-if="volumeBoundries"
-        label="Speakers"
         :value="(routingVolumeMain.left + routingVolumeMain.right) / 2"
         :min="volumeBoundries.min"
         :max="volumeBoundries.max"
@@ -170,24 +169,6 @@ onMounted(async () => {
         @newValue="value => setOutputRoutingVolume(OutputType.SPEAKERS, value)"
       />
       <div :class="$style.inputControls">
-  
-        <Knob
-          v-if="inputGain !== null && inputGainBoundries"
-          label="Gain"
-          :value="inputGain"
-          :min="inputGainBoundries.min"
-          :max="inputGainBoundries.max"
-          :step="inputChannel.type === InputType.LINE ? 0.5 : 1"
-          @newValue="setInputGain"
-        />
-        <Knob
-          v-if="volumeBoundries"
-          label="Headphones"
-          :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
-          :min="volumeBoundries.min"
-          :max="volumeBoundries.max"
-          @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
-        />
         <button
           v-if="inputChannel.switchNames.phantom"
           :class="[$style.phantomButton, { [$style.phantomActive]: currentPhantomState }]"
@@ -216,6 +197,26 @@ onMounted(async () => {
             {{ rmeStore.soundCardConfig.inputSwitchValues.lineSensLow }}
           </button>
         </div>
+
+        <Knob
+          v-if="inputGain !== null && inputGainBoundries"
+          label="Gain"
+          :value="inputGain"
+          :min="inputGainBoundries.min"
+          :max="inputGainBoundries.max"
+          :size="60"
+          :step="inputChannel.type === InputType.LINE ? 0.5 : 1"
+          @newValue="setInputGain"
+        />
+        <Knob
+          v-if="volumeBoundries"
+          label="Headphones"
+          :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
+          :min="volumeBoundries.min"
+          :max="volumeBoundries.max"
+          :size="60"
+          @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
+        />
       </div>
     </div>
   </div>
@@ -265,13 +266,12 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
 
   .lineSens {
     background-color: #3a3a3a;
     border: unset;
     border-radius: 4px;
-    width: 60px;
+    width: 53px;
     color: #aaaaaa;
     filter: opacity(0.6);
 

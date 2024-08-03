@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
-import Knob from "./Knob.vue";
 import Fader from "./Fader.vue"
 import { RmeService } from "../services/RmeService";
-import { AlsaOutput, OutputType } from "../types/config.types";
+import { AlsaPlayback, OutputType } from "../types/config.types";
 import { useRmeStore } from "../stores/rmeStore";
 import { alsaToDB } from "../utils/alsaValConversion";
 
 interface MonitorControlProps {
-  outputs: AlsaOutput[];
+  playbackChannel: AlsaPlayback;
 }
 
 defineProps<MonitorControlProps>();
@@ -45,44 +44,25 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div :class="$style.monitorControl">
-    <p :class="$style.label">Monitor</p>
-    <div :class="$style.controls">
-      <div :class="$style.mainVolume">
-        <Fader 
-          :value="monitorVolumeLeft" 
-          :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
-          :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
-          :stereo="true"
-          :value-right="monitorVolumeRight"
-        />
-      </div>
-      <Knob
-        :label="'Headphones'"
-        :value="headphonesVolume"
-        :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
-        :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
-        :size="80"
-        @new-value="value => setOutputVolume(OutputType.HEADPHONES, value)"
-      />
-    </div>
+  <div :class="$style.playbackControl">
+    <p :class="$style.label">{{ playbackChannel.displayName }}</p>
+    <Fader 
+      :value="monitorVolumeLeft" 
+      :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
+      :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
+      :stereo="true"
+      :value-right="monitorVolumeRight"
+    />
   </div>
-
-
 </template>
 
 <style module>
-  .monitorControl{
-    display: flex;
-    gap: 20px;
-    flex-direction: column;
-  }
-  
-  .controls{
-    display: flex;
-  }
-
-  .mainVolume {
-    margin-right: 20px;
-  }
+.playbackControl{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 30px;
+  --channel-border-color: rgb(190, 190, 190);
+  border-right: 1px solid var(--channel-border-color);
+}
 </style>

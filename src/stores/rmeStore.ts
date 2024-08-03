@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
-import { AlsaInput, AlsaOutput, AudioProfile } from "../types/config.types";
+import { AlsaInput, AlsaOutput, AlsaPlayback, AudioProfile } from "../types/config.types";
 import { audioProfilesConfig, babyfaceProConf } from "../config/soundCardConfig";
 
 export const useRmeStore = defineStore("rme", () => {
@@ -11,6 +11,7 @@ export const useRmeStore = defineStore("rme", () => {
   const supportedProfiles = ref<string[]>([]);
   const inputs = ref<AlsaInput[]>(babyfaceProConf.inputs);
   const outputs = ref<AlsaOutput[]>(babyfaceProConf.outputs);
+  const playback = ref<AlsaPlayback>(babyfaceProConf.playback)
 
   const isInitialized = ref<boolean | null>(null);
 
@@ -48,6 +49,7 @@ export const useRmeStore = defineStore("rme", () => {
     inputs,
     isInitialized,
     outputs,
+    playback,
     soundCardConfig,
     supportedProfiles,
     getControlByName,

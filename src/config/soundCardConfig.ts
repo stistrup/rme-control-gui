@@ -67,6 +67,11 @@ export const babyfaceProConf: SoundcardConfig = {
             type: OutputType.HEADPHONES
         }
     ],
+    playback: {
+        displayName: "Playback",
+        controlNameLeft: "PCM-AN1-AN1",
+        controlNameRight: "PCM-AN2-AN2"
+    },
     inputSwitchValues: {
         lineSensLow: "+4dBu",
         lineSensHigh: "-10dBV",
