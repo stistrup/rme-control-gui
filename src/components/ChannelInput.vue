@@ -8,7 +8,7 @@ import { useRmeStore } from "../stores/rmeStore";
 //   applyExponentialCurve,
 //   removeExponentialCurve,
 // } from "../utils/logConvertion";
-import { AlsaInput, OutputType } from "../types/config.types";
+import { AlsaInput, InputType, OutputType } from "../types/config.types";
 import { alsaToDB } from "../utils/alsaValConversion";
 
 interface ChannelProps {
@@ -40,11 +40,15 @@ if (!rmeService) {
 
 const getInputGain = async () => {
   if (channelIndex.value == null) return null
-  const gain = await rmeService.getInputGain(channelIndex.value)
+  let gain = await rmeService.getInputGain(channelIndex.value)
+
+  if (gain && props.inputChannel.type === InputType.LINE) gain = gain / 2
+
   return gain ?? null
 }
 
 const setInputGain = async (newValue: number) => {
+  if (props.inputChannel.type === InputType.LINE) newValue = newValue * 2
   console.log('Set gain placeholder:', newValue)
 }
 
@@ -126,13 +130,18 @@ onMounted(async () => {
   currentPhantomState.value = await getPhantomState();
   inputGain.value = await getInputGain();
 
-  const gainBoundries = rmeStore.getControlByName(props.inputChannel.switchNames.gain)
+  let inputControls = rmeStore.getControlByName(props.inputChannel.switchNames.gain)
+
+  if (props.inputChannel.type === InputType.LINE) inputControls.limits.max = inputControls.limits.max / 2
+
   const volBoundriesAlsa = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME:
 
   const volBoundriesDbMin = alsaToDB(volBoundriesAlsa.limits.min)
   const volBoundriesDbMax = alsaToDB(volBoundriesAlsa.limits.max)
 
-  inputGainBoundries.value = gainBoundries.limits
+
+
+  inputGainBoundries.value = inputControls.limits
   volumeBoundries.value = {min: volBoundriesDbMin, max: volBoundriesDbMax}
 
   const levelsMain = await getOuputRoutingVolume(OutputType.SPEAKERS);
@@ -168,6 +177,7 @@ onMounted(async () => {
           :value="inputGain"
           :min="inputGainBoundries.min"
           :max="inputGainBoundries.max"
+          :step="inputChannel.type === InputType.LINE ? 0.5 : 1"
           @newValue="setInputGain"
         />
         <Knob

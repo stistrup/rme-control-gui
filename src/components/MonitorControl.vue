@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import Knob from "./Knob.vue";
+import Fader from "./Fader.vue"
 import { RmeService } from "../services/RmeService";
 import { AlsaOutput, OutputType } from "../types/config.types";
 import { useRmeStore } from "../stores/rmeStore";
@@ -19,7 +20,8 @@ if (!rmeService) {
   throw new Error("Could not inject RME service");
 }
 
-const monitorVolume = ref(0);
+const monitorVolumeLeft = ref(0);
+const monitorVolumeRight = ref(0);
 const headphonesVolume = ref(0);
 
 const setOutputVolume = (outputType: OutputType, volume: number) => {
@@ -32,16 +34,18 @@ onMounted(async () => {
 
   if (!hp || !monitor) return;
 
-  const monitorAvarage = (monitor.left + monitor.right) / 2;
   const hpAvarage = (hp.left + hp.right) / 2;
 
-  monitorVolume.value = monitorAvarage
+  monitorVolumeLeft.value = monitor.left
+  monitorVolumeRight.value = monitor.right
   headphonesVolume.value = hpAvarage;
+
+  console.log(monitorVolumeLeft.value, monitorVolumeRight.value)
 });
 </script>
 
 <template>
-  <Knob
+  <!-- <Knob
     :label="'Monitor volume'"
     :value="monitorVolume"
     :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
@@ -56,6 +60,14 @@ onMounted(async () => {
     :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
     :size="200"
     @new-value="value => setOutputVolume(OutputType.HEADPHONES, value)"
+  /> -->
+  <Fader 
+    label="Monitors" 
+    :value="monitorVolumeLeft" 
+    :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
+    :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
+    :stereo="true"
+    :value-right="monitorVolumeRight"
   />
 </template>
 

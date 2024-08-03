@@ -7,10 +7,12 @@ interface KnobProps {
   max: number;
   value: number;
   size?: number;
+  step?: number
 }
 
 const props = withDefaults(defineProps<KnobProps>(), {
   size: 80,
+  step: 1
 });
 
 const emit = defineEmits(["newValue"]);
@@ -45,11 +47,17 @@ const referenceLineWidth = computed(() =>
   Math.max(1, Math.round(componentSize.value * 0.017))
 );
 const referenceLineDistance = computed(() => Math.round(knobSize.value * 0.65));
+
 const referenceLineTop = computed(() => {
   const knobCenter = componentSize.value / 2;
   const lineCenter = referenceLineDistance.value;
   return knobCenter - lineCenter;
 });
+
+const displayedValue = computed(() => {
+  const value = Math.round(localValue.value / props.step) * props.step
+  return value === -65 ? "-inf" : value
+})
 
 function startDrag(event: MouseEvent) {
   isDragging.value = true;
@@ -70,7 +78,7 @@ function drag(event: MouseEvent) {
 
   let newValue = startValue.value + (deltaY / sensitivity) * range;
   newValue = Math.max(props.min, Math.min(props.max, newValue));
-  newValue = Math.round(newValue);
+  newValue = Math.round(newValue / props.step) * props.step;
 
   localValue.value = newValue;
   emit("newValue", newValue);
@@ -132,7 +140,7 @@ onUnmounted(() => {
       ></div>
     </div>
     <span :class="$style.label">{{ label }}</span>
-    <span :class="$style.value">{{ Math.round(localValue) === -65 ? "-inf" : Math.round(localValue) }} dB</span>
+    <span :class="$style.value">{{ displayedValue }} dB</span>
   </div>
 </template>
 

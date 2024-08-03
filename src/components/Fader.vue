@@ -1,38 +1,63 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { applyExponentialCurve, removeExponentialCurve } from "../utils/expConvertion";
 
 interface FaderProps {
   label: string;
   min: number;
   max: number;
   value: number;
+  valueRight?: number;
+  stereo?: boolean
 }
 
-const props = defineProps<FaderProps>();
+const props = withDefaults(defineProps<FaderProps>(), {
+  stereo: false,
+});
 
-const emit = defineEmits(["newValue"]);
+const emit = defineEmits(["newValue", "newValueRight"]);
 
 const localValue = ref(props.value);
+const localValueRight = ref(props.valueRight);
 const isDragging = ref(false);
 const startY = ref(0);
 const startValue = ref(0);
+const startValueRight = ref(0) 
+const stereoLink = ref(true)
 
 const faderPosition = computed(() => {
   const range = props.max - props.min;
   const percentage = (localValue.value - props.min) / range;
-  return (1 - percentage) * 100; // Invert percentage for Y-axis
+  return (1 - percentage) * 100; 
+});
+
+const faderPositionRight = computed(() => {
+  if (localValueRight.value === undefined) return null
+  const range = props.max - props.min;
+  const percentage = (localValueRight.value - props.min) / range;
+  console.log('????',percentage)
+  return (1 - percentage) * 100; 
 });
 
 const zeroPosition = computed(() => {
-  const range = props.max - props.min;
-  const percentage = (0 - props.min) / range;
-  return (1 - percentage) * 100;
+  if (props.min >= 0 || props.max <= 0) {
+    return props.min >= 0 ? 100 : 0;
+  }
+  
+  const zeroLinear = (0 - props.min) / (props.max - props.min);
+  const zeroCurved = applyExponentialCurve(zeroLinear, 0, 1);
+  return (1 - zeroCurved) * 100;
 });
 
 function startDrag(event: MouseEvent) {
   isDragging.value = true;
   startY.value = event.clientY;
   startValue.value = localValue.value;
+
+  if (localValueRight.value && stereoLink.value) {
+    startValueRight.value = localValueRight.value
+  }
+
   window.addEventListener("mousemove", drag);
   window.addEventListener("mouseup", stopDrag);
 }
@@ -44,14 +69,38 @@ function drag(event: MouseEvent) {
   const currentY = event.clientY;
   const deltaY = currentY - startY.value;
   const range = props.max - props.min;
-  const faderHeight = 300; // Height of the fader track
+  const faderHeight = 300;
 
-  let newValue = startValue.value - (deltaY / faderHeight) * range;
-  newValue = Math.max(props.min, Math.min(props.max, newValue));
-  newValue = Math.round(newValue * 2) / 2; // Round to nearest 0.5
+  let newLinearValue = startValue.value - (deltaY / faderHeight) * range;
+  newLinearValue = Math.max(props.min, Math.min(props.max, newLinearValue));
 
-  localValue.value = newValue;
-  emit("newValue", newValue);
+  let restoredScale = removeExponentialCurve(newLinearValue, props.min, props.max);
+  restoredScale = Math.round(restoredScale * 2) / 2; // Round to nearest 0.5
+
+  let newLinearValueRight
+  let restoredScaleRight
+
+  if (localValueRight.value && stereoLink) {
+    newLinearValueRight = startValueRight.value - (deltaY / faderHeight) * range;
+    newLinearValueRight = Math.max(props.min, Math.min(props.max, newLinearValueRight));
+
+    restoredScaleRight = removeExponentialCurve(newLinearValue, props.min, props.max);
+    restoredScaleRight = Math.round(restoredScaleRight * 2) / 2; // Round to nearest 0.5
+  }
+
+  const snapThreshold = 1; // 1 dB
+
+  if (restoredScale < snapThreshold && restoredScale > -snapThreshold) {
+    newLinearValue = applyExponentialCurve(0, props.min, props.max)
+  }
+
+  localValue.value = newLinearValue;
+  emit("newValue", restoredScale);
+
+  if (localValueRight.value && restoredScaleRight && newLinearValueRight) {
+    localValueRight.value = restoredScaleRight
+    emit("newValueRight", newLinearValueRight)
+  }
 }
 
 function stopDrag() {
@@ -61,7 +110,16 @@ function stopDrag() {
 }
 
 onMounted(() => {
-  localValue.value = props.value;
+  localValue.value = applyExponentialCurve(props.value, props.min, props.max);
+
+  if (props.valueRight === undefined) return 
+
+  console.error(props.valueRight)
+
+  console.error('Yooo', applyExponentialCurve(props.valueRight, props.min, props.max))
+
+  localValueRight.value = applyExponentialCurve(props.valueRight, props.min, props.max)
+  
 });
 
 onUnmounted(() => {
@@ -71,44 +129,79 @@ onUnmounted(() => {
 
 // Watch for changes in the prop value
 watch(() => props.value, (newValue) => {
-  localValue.value = newValue;
+  localValue.value = applyExponentialCurve(newValue, props.min, props.max);
+});
+
+watch(() => props.valueRight, (newValue) => {
+  if (newValue === undefined) return
+  localValueRight.value = applyExponentialCurve(newValue, props.min, props.max);
+});
+
+const displayValue = computed(() => {
+  return Math.round(removeExponentialCurve(localValue.value, props.min, props.max));
 });
 </script>
 
 <template>
+  
   <div :class="$style.control">
     <div :class="$style.faderContainer">
-      <div :class="$style.faderTrack">
+      <div :class="$style.fader">
+        <div :class="$style.faderTrack">
+          <div
+            :class="$style.zeroLine"
+            :style="{ top: `${zeroPosition}%` }"
+          ></div>
+        </div>
         <div
-          :class="$style.zeroLine"
-          :style="{ top: `${zeroPosition}%` }"
-        ></div>
+          :class="$style.faderHandle"
+          :style="{ top: `${faderPosition}%` }"
+          @mousedown.prevent="startDrag"
+        >
+          <div :class="$style.handleLine"></div>
+        </div>
       </div>
-      <div
-        :class="$style.faderHandle"
-        :style="{ top: `${faderPosition}%` }"
-        @mousedown.prevent="startDrag"
-      >
-        <div :class="$style.handleLine"></div>
+      <div v-if="stereo && faderPositionRight !== null" :class="[$style.fader, $style.faderRight]">
+        <div :class="$style.faderTrack">
+          <div
+            :class="$style.zeroLine"
+            :style="{ top: `${zeroPosition}%` }"
+          ></div>
+        </div>
+        <div
+          :class="$style.faderHandle"
+          :style="{ top: `${faderPositionRight}%` }"
+          @mousedown.prevent="startDrag"
+        >
+          <div :class="$style.handleLine"></div>
+        </div>
       </div>
     </div>
     <div :class="$style.valueContainer">
       <span :class="$style.label">{{ label }}</span>
-      <span :class="$style.value">{{ localValue.toFixed(1) }} dB</span>
+      <span :class="$style.value">{{ displayValue === -65 ? "-inf" : displayValue }} dB</span>
     </div>
   </div>
 </template>
+
 <style module>
 .control {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   width: 60px;
 }
+
 .faderContainer {
+  display: flex;
+}
+
+.fader {
   position: relative;
   width: 60px;
   height: 300px;
+
+  &.faderRight{
+    margin-left: 40px;
+  }
 }
 .faderTrack {
   position: absolute;
