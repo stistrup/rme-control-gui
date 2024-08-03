@@ -8,6 +8,15 @@ IMPORTANT: If you wanna try this out yourself, you need to apply [this patch](ht
 
 ![image](https://github.com/user-attachments/assets/1e71eb90-72fd-400c-8ed9-10111f8ddb90)
 
+# Development
+
+run "npm run tauri dev"
+
+# Building
+
+I'm using Manjaro, and to build it for manjaro use "npm run build-tauri". That will create an appimage that you can run as is. There might be a couple of dependencies you'd have to fix, the compiler will tell you. And at least for me, there is a bug with tauri and nvidia card, so i'd have to run it with "WEBKIT_DISABLE_DMABUF_RENDERER=1" set. If you are using any debian based distro, you can change target to "deb" in src-tauri/tauri.conf.json. 
+
+As i'm not really doing this to share it as a ready made package to install and run, i won't put much effort into making it a neat package ready to use, at least for now. Hopefully that will change in a near future. 
 
 # Tauri + Vue + TypeScript
 
