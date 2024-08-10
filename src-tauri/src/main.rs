@@ -45,8 +45,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             alsa::controller::set_input_gain,
             alsa::controller::get_line_input_sensitivity,
             alsa::controller::set_line_input_sensitivity,
-            alsa::controller::get_routing_volume,
-            alsa::controller::set_routing_volume,
+            alsa::controller::get_pad_state,
+            alsa::controller::set_pad_state,
             alsa::controller::get_phantom_power_state,
             alsa::controller::set_phantom_power,
             alsa::controller::get_soundcard_controls,
@@ -54,8 +54,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             pipewire::controller::set_pipewire_profile,
             pipewire::controller::get_pipewire_profiles,
             pipewire::controller::set_buffer_size,
-            pipewire::controller::get_pipewire_volume,
-            pipewire::controller::set_pipewire_volume
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

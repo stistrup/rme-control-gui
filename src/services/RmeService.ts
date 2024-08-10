@@ -250,6 +250,50 @@ export class RmeService {
     }
   }
 
+  public setPadState = async (inputIndex: number, newState: boolean) => {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+    if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.phantom) {
+      console.error('This input does not support line sensitivity')
+      return
+    }
+
+    const switchName = this.store.soundCardConfig.inputs[inputIndex].switchNames.pad
+
+    try {
+      await invoke("set_pad_state", {
+        controlName: switchName,
+        newState: newState,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Failed to get pipewire profiles:", error);
+      throw error;
+    }
+  }
+
+  public getPadState = async (inputIndex: number) => {
+    if (inputIndex > this.store.soundCardConfig.inputs.length) return
+
+    const input = this.store.soundCardConfig.inputs[inputIndex]
+
+    if (!input.switchNames.phantom) {
+      console.error('This input does not support phantom. Cannot get')
+      return
+    }
+
+    try {
+      const phantomState = (await invoke("get_pad_state", {
+        controlName: input.switchNames.phantom,
+      })) as boolean;
+      console.log("Phantom state for", input.displayName, ':', phantomState);
+      return phantomState;
+    } catch (error) {
+      console.error("Failed to get initial states:", error);
+      throw error;
+    }
+  }
+
   public getPhantomState = async (inputIndex: number) => {
     if (inputIndex > this.store.soundCardConfig.inputs.length) return
 

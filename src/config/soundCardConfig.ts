@@ -18,7 +18,8 @@ export const babyfaceProConf: SoundcardConfig = {
             type: InputType.MIC,
             switchNames: {
                 phantom: "Mic-AN1 48V",
-                gain: "Mic-AN1 Gain"
+                gain: "Mic-AN1 Gain",
+                pad: "Mic-AN1 PAD",
             }
         },
         {
@@ -27,7 +28,8 @@ export const babyfaceProConf: SoundcardConfig = {
             type: InputType.MIC,
             switchNames: {
                 phantom: "Mic-AN2 48V",
-                gain: "Mic-AN2 Gain"
+                gain: "Mic-AN2 Gain",
+                pad: "Mic-AN2 PAD"
             }
         },
         {

@@ -2,12 +2,13 @@
 import { ref, computed, onMounted, onUnmounted, watchEffect } from "vue";
 
 interface KnobProps {
-  label: string;
   min: number;
   max: number;
   value: number;
   size?: number;
   step?: number
+  label?: string;
+  icon?: string;
 }
 
 const props = withDefaults(defineProps<KnobProps>(), {
@@ -106,46 +107,54 @@ onUnmounted(() => {
 
 <template>
   <div :class="$style.control" :style="{ width: `${componentSize}px` }">
-    <div
-      :class="$style.knobContainer"
-      :style="{ width: `${componentSize}px`, height: `${componentSize}px` }"
-    >
+    <div :class="$style.topWrapper">
       <div
-        :class="$style.knob"
-        :style="{ width: `${knobSize}px`, height: `${knobSize}px` }"
-        @mousedown.prevent="startDrag"
+        :class="$style.knobContainer"
+        :style="{ width: `${componentSize}px`, height: `${componentSize}px` }"
       >
         <div
-          :class="$style.indicator"
+          :class="$style.knob"
+          :style="{ width: `${knobSize}px`, height: `${knobSize}px` }"
+          @mousedown.prevent="startDrag"
+        >
+          <div
+            :class="$style.indicator"
+            :style="{
+              transform: `rotate(${rotation}deg)`,
+              height: `${indicatorLength}px`,
+              width: `${indicatorWidth}px`,
+              top: `${knobSize / 2 - indicatorLength}px`,
+              left: `calc(50% - ${indicatorWidth / 2}px)`,
+            }"
+          ></div>
+        </div>
+        <div
+          v-for="line in referenceLines"
+          :key="line.rotation"
+          :class="$style.referenceLine"
           :style="{
-            transform: `rotate(${rotation}deg)`,
-            height: `${indicatorLength}px`,
-            width: `${indicatorWidth}px`,
-            top: `${knobSize / 2 - indicatorLength}px`,
-            left: `calc(50% - ${indicatorWidth / 2}px)`,
+            transform: `rotate(${line.rotation}deg)`,
+            height: `${referenceLineHeight}px`,
+            width: `${referenceLineWidth}px`,
+            top: `${referenceLineTop}px`,
+            transformOrigin: `center ${referenceLineDistance}px`,
           }"
         ></div>
       </div>
-      <div
-        v-for="line in referenceLines"
-        :key="line.rotation"
-        :class="$style.referenceLine"
-        :style="{
-          transform: `rotate(${line.rotation}deg)`,
-          height: `${referenceLineHeight}px`,
-          width: `${referenceLineWidth}px`,
-          top: `${referenceLineTop}px`,
-          transformOrigin: `center ${referenceLineDistance}px`,
-        }"
-      ></div>
+      <span v-if="label" :class="$style.label">{{ label }}</span>
+      <img v-else-if="icon" :class="$style.icon" :src="`images/${icon}`"/>
     </div>
-    <span :class="$style.label">{{ label }}</span>
     <span :class="$style.value">{{ displayedValue }} dB</span>
   </div>
 </template>
 
 <style module>
 .control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.topWrapper{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -157,7 +166,11 @@ onUnmounted(() => {
   align-items: center;
 }
 .knob {
-  background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+  background: radial-gradient(circle at 30% 30%, 
+    #4a4a4a 0%, 
+    #3a3a3a 50%, 
+    #2a2a2a 100%
+  );
   border-radius: 50%;
   position: relative;
   cursor: ns-resize;
@@ -186,5 +199,10 @@ onUnmounted(() => {
   margin-top: 4px;
   font-size: 12px;
   font-weight: 400;
+}
+
+.icon {
+  height: 20px;
+  filter:opacity(0.7);
 }
 </style>

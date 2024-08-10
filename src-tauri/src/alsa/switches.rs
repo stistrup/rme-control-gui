@@ -1,10 +1,10 @@
 use std::process::Command;
 
-pub fn set_phantom_power(card_index: &str, mic: &str, new_state: bool) -> Result<(), String> {
+pub fn set_pad_state(card_index: &str, switch_name: &str, new_state: bool) -> Result<(), String> {
     let state = if new_state { "on" } else { "off" };
     
     let output = Command::new("amixer")
-        .args(&["-c", &card_index, "set", mic, state])
+        .args(&["-c", &card_index, "set", switch_name, state])
         .output()
         .map_err(|e| e.to_string())?;
     
@@ -15,7 +15,7 @@ pub fn set_phantom_power(card_index: &str, mic: &str, new_state: bool) -> Result
     }
 }
 
-pub fn get_phantom_power_state(card_index: &str, mic_name: &str) -> Result<bool, String> {
+pub fn get_pad_state(card_index: &str, mic_name: &str) -> Result<bool, String> {
 
     let output = Command::new("amixer")
         .args(&["-c", &card_index, "get", mic_name])
@@ -43,6 +43,52 @@ pub fn get_phantom_power_state(card_index: &str, mic_name: &str) -> Result<bool,
         Ok(is_phantom_on)
     } else {
         Err(format!("Microphone {} not found", mic_name))
+    }
+}
+
+pub fn set_phantom_power(card_index: &str, control_name: &str, new_state: bool) -> Result<(), String> {
+    let state = if new_state { "on" } else { "off" };
+    
+    let output = Command::new("amixer")
+        .args(&["-c", &card_index, "set", control_name, state])
+        .output()
+        .map_err(|e| e.to_string())?;
+    
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+pub fn get_phantom_power_state(card_index: &str, control_name: &str) -> Result<bool, String> {
+
+    let output = Command::new("amixer")
+        .args(&["-c", &card_index, "get", control_name])
+        .output()
+        .map_err(|e| format!("Failed to execute amixer: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    let mut is_phantom_on = false;
+    let mut mic_found = false;
+
+    for line in stdout.lines() {
+        if line.starts_with("Simple mixer control") && line.contains(control_name) && line.contains("48V") {
+            mic_found = true;
+            continue;
+        }
+
+        if mic_found && line.contains("Mono: Playback") {
+            is_phantom_on = line.contains("[on]");
+            break;
+        }
+    }
+
+    if mic_found {
+        Ok(is_phantom_on)
+    } else {
+        Err(format!("Microphone {} not found", control_name))
     }
 }
 

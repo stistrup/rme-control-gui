@@ -73,7 +73,7 @@ onMounted(async () => {
         />
       </div>
       <Knob
-        :label="'Headphones'"
+        icon="headphones.png"
         :value="headphonesVolume"
         :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
         :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"

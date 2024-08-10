@@ -1,5 +1,5 @@
 use tauri::State;
-use super::{buffer_size, profile, volume};
+use super::{buffer_size, profile};
 
 #[tauri::command]
 pub fn set_buffer_size(_state: State<'_, super::super::AppState>, buffer_size: u32) -> Result<(), String> {
@@ -22,14 +22,4 @@ pub fn set_pipewire_profile(state: State<'_, super::super::AppState>, profile: S
 pub fn get_pipewire_profiles(state: State<'_, super::super::AppState>) -> Result<Vec<String>, String> {
     let card_id = &state.pipewire_card_id;
     profile::get_profiles(&card_id)
-}
-
-#[tauri::command]
-pub fn get_pipewire_volume(_state: State<'_, super::super::AppState>, node_id: String) -> Result<f32, String> {
-    volume::get_volume(&node_id)
-}
-
-#[tauri::command]
-pub fn set_pipewire_volume(_state: State<'_, super::super::AppState>, node_id: String, gain: f32) -> Result<(), String> {
-    volume::set_volume(&node_id, gain)
 }
