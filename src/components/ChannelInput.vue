@@ -99,11 +99,16 @@ const getPhantomState = async () => {
 };
 
 const setLineSens = async (e: Event) => {
+  const target = e.target as HTMLSelectElement;
+  const value = target.value;
+
+  console.log('VALUE!!', value)
+
   if (channelIndex.value == null) return
   if (!props.inputChannel.switchNames.lineSens) return;
-  const result = await rmeService!.setLineSensitivity(channelIndex.value, newSens);
+  const result = await rmeService!.setLineSensitivity(channelIndex.value, value);
   if (result) {
-    currentLineSens.value = newSens
+    currentLineSens.value = value;
   }
 };
 
@@ -180,30 +185,32 @@ onMounted(async () => {
       />
       <div :class="$style.inputControls">
         <div :class="$style.inputSwitchesContainer">
-          <button
-            v-if="inputChannel.switchNames.phantom"
-            :class="[$style.switchButton, $style.phantomButton, { [$style.active]: currentPhantomState }]"
-            @click="setPhantomState"
+          <div :class="$style.buttonGroup">
+            <button
+              v-if="inputChannel.switchNames.phantom"
+              :class="[$style.switchButton, $style.phantomButton, { [$style.active]: currentPhantomState }]"
+              @click="setPhantomState"
+            >
+              48v
+            </button>
+            <button
+              v-if="inputChannel.switchNames.pad"
+              :class="[$style.switchButton, $style.padButton, { [$style.active]: currentPadState }]"
+              @click="setPadState"
+            >
+              PAD
+            </button>
+          </div>
+          <select
+            v-if="inputChannel.type === InputType.LINE"
+            :class="$style.lineSensSelect"
+            :value="currentLineSens"
+            @change="setLineSens"
           >
-            48v
-          </button>
-          <button
-            v-if="inputChannel.switchNames.pad"
-            :class="[$style.switchButton, $style.padButton, { [$style.active]: currentPadState }]"
-            @click="setPadState"
-          >
-            PAD
-          </button>
+          <option :value="rmeStore.soundCardConfig.inputSwitchValues.lineSensLow">+4dBV</option>
+          <option :value="rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh">-10dBu</option>
+          </select>
         </div>
-        <select
-          v-if="inputChannel.type === InputType.LINE"
-          :class="$style.lineSensSelect"
-          :value="currentLineSens"
-          @change="setLineSens"
-        >
-          <option :value="rmeStore.soundCardConfig.inputSwitchValues.lineSensLow">-10dBu</option>
-          <option :value="rmeStore.soundCardConfig.inputSwitchValues.lineSensHigh">+4dBV</option>
-        </select>
 
         <Knob
           v-if="inputGain !== null && inputGainBoundries"
@@ -233,6 +240,12 @@ onMounted(async () => {
 <style module>
 .channelContainer {
   --channel-border-color: rgb(190, 190, 190);
+  --button-bg-color: #3a3a3a;
+  --button-text-color: #aaaaaa;
+  --button-active-color: #ff7676;
+  --control-width: 80px;
+  --border-radius: 4px;
+  --delimiter-color: rgba(255, 255, 255, 0.2);
 
   border-right: 1px solid var(--channel-border-color);
   padding: 0 10px;
@@ -241,61 +254,95 @@ onMounted(async () => {
   align-items: center;
   gap: 20px;
 
-  &.firstChannel{
+  &.firstChannel {
     border-left: 1px solid var(--channel-border-color);
   }
 }
 
-.controlsContainer{
+.controlsContainer {
   display: flex;
 }
 
-.inputControls{
+.inputControls {
   display: flex;
   flex-direction: column;
+  margin-left: 5px;
+}
+
+.inputSwitchesContainer {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: var(--control-width);
+}
+
+.buttonGroup {
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.switchButton {
+  flex: 1;
+  padding: 8px 0;
+  background-color: var(--button-bg-color);
+  border: none;
+  color: var(--button-text-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &.active {
+    color: var(--button-active-color);
+    filter: brightness(1.2);
+  }
+
+  &:hover {
+    filter: brightness(1.1);
+  }
 }
 
 .phantomButton {
-  margin: 20px auto;
-  background-color: #3a3a3a;
-  border: unset;
-  border-radius: 4px;
-  color: #aaaaaa;
-  filter: opacity(0.6);
+  border-top-left-radius: var(--border-radius);
+  border-bottom-left-radius: var(--border-radius);
+}
 
-  &.phantomActive {
-    color: #ff7676;
-    filter: unset;
+.padButton {
+  border-top-right-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15%;
+    height: 70%;
+    width: 1px;
+    background-color: var(--delimiter-color);
   }
 }
 
-.lineSensContainer {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  .lineSens {
-    background-color: #3a3a3a;
-    border: unset;
-    border-radius: 4px;
-    width: 48px;
-    color: #aaaaaa;
-    filter: opacity(0.6);
-    font-size: 11px;
-
-    &.lineSensActive {
-      color: #f5f5f5;
-      filter: unset;
-    }
-  }
-}
-
-.gainComponent{
-  margin-bottom: 20px;
-}
-
-button {
+.lineSensSelect {
+  width: 100%;
+  padding: 8px 24px 8px 8px;
+  background-color: var(--button-bg-color);
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--button-text-color);
+  font-size: 12px;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23aaaaaa' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 8px;
+}
+
+.gainComponent {
+  margin-bottom: 20px;
 }
 </style>
