@@ -238,13 +238,14 @@ onMounted(async () => {
 </template>
 
 <style module>
+
 .channelContainer {
   --channel-border-color: rgb(190, 190, 190);
-  --button-bg-color: #3a3a3a;
-  --button-text-color: #aaaaaa;
+  --button-bg-color: #4d4d4d;
+  --button-text-color: #ffffff;
   --button-active-color: #ff7676;
-  --control-width: 80px;
-  --border-radius: 4px;
+  --control-width: 75px;
+  --border-radius: 3px;
   --delimiter-color: rgba(255, 255, 255, 0.2);
 
   border-right: 1px solid var(--channel-border-color);
@@ -285,8 +286,9 @@ onMounted(async () => {
 
 .switchButton {
   flex: 1;
-  padding: 8px 0;
+  padding: 6px 0;
   background-color: var(--button-bg-color);
+  height: 30px;
   border: none;
   color: var(--button-text-color);
   font-size: 12px;
@@ -326,20 +328,25 @@ onMounted(async () => {
 
 .lineSensSelect {
   width: 100%;
-  padding: 8px 24px 8px 8px;
+  padding-left: 8px;
+  height: 30px;
   background-color: var(--button-bg-color);
   border: none;
   border-radius: var(--border-radius);
   color: var(--button-text-color);
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23aaaaaa' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
-  background-size: 8px;
+  background-size: 12px auto;
+}
+
+.lineSensText{
+  font-size: 2px;
 }
 
 .gainComponent {
