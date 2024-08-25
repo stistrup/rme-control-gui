@@ -33,6 +33,7 @@ const setOutputVolume = (outputType: OutputType, volume: number) => {
   }
 
   rmeService.setAlsaVolumeStereo(output.controlNameLeft, output.controlNameRight, volume);
+  // rmeService.setMainOutVolume(volume)
 };
 
 onMounted(async () => {

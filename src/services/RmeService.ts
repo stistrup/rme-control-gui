@@ -172,6 +172,23 @@ export class RmeService {
     }
   };
 
+  public setMainOutVolume = async (volume: number) => {
+    const value = dbToALSA(volume)
+    try {
+      await invoke("set_main_out_volume", {
+        channel: 0,
+        value
+      });
+      await invoke("set_main_out_volume", {
+        channel: 1,
+        value
+      });
+    } catch (error) {
+      console.error("Set main out volume error::", error);
+      throw error;
+    }
+  }
+
   public getLineSensitivity = async (inputIndex: number) => {
     if (inputIndex > this.store.soundCardConfig.inputs.length) return
     if (!this.store.soundCardConfig.inputs[inputIndex].switchNames.lineSens) {

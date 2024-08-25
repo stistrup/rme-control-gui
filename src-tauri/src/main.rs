@@ -3,6 +3,7 @@
 
 mod alsa;
 mod pipewire;
+mod usb;
 
 use tauri::Manager;
 
@@ -15,7 +16,7 @@ impl AppState {
     pub fn new(card_name_alsa: &str, card_name_pipewire: &str) -> Result<Self, String> {
         let alsa_card_number = alsa::general::get_card_number_by_name(card_name_alsa)?;
         let pipewire_card_id = pipewire::general::get_card_id_by_name(card_name_pipewire)?;
-        
+
         Ok(Self {
             alsa_card_number,
             pipewire_card_id,
@@ -54,9 +55,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             pipewire::controller::set_pipewire_profile,
             pipewire::controller::get_pipewire_profiles,
             pipewire::controller::set_buffer_size,
+            usb::controller::set_main_out_volume,
+            // usb::controller::write_control,
+
+            // usb::controller::read_gain,
+            // usb::controller::write_gain,
+            // usb::controller::read_volume,
+            // usb::controller::write_volume,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-
     Ok(())
 }
