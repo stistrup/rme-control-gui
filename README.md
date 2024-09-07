@@ -4,7 +4,7 @@ A graphical interface interfacing with ALSA and Pipewire to give easy control to
 
 A fun little project to learn tauri and rust. Design will most likely look different later but i have some functionality i want to sort out first. 
 
-IMPORTANT: If you wanna try this out yourself, you need to apply [this patch](https://github.com/stistrup/rme-gain-kernel-patch). It has been submitted and accepted into the kernel but won't be available until 6.11
+IMPORTANT: If you wanna try this out yourself, you need to apply [this patch](https://github.com/stistrup/rme-gain-kernel-patch). It has been submitted and accepted into the kernel but won't be available until 6.12
 
 ![image](https://github.com/user-attachments/assets/021db914-f0e2-406b-b667-162300d76f97)
 
