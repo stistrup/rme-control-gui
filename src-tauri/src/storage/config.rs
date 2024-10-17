@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
-use tauri::{AppHandle, Manager}; // Ensure Manager is in scope
+use tauri::AppHandle;
+use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InputChannelConfig {
@@ -23,9 +24,9 @@ pub struct ConfigStorage {
 impl ConfigStorage {
     pub fn new(app_handle: &AppHandle) -> Result<Self, Box<dyn std::error::Error>> {
         let config_dir = app_handle
-            .path_resolver()
-            .app_config_dir() // This should return an Option<PathBuf>
-            .or(Err("Failed to get app config directory".into()))?; // Using or for error handling
+            .path()
+            .app_config_dir()
+            .map_err(|e| format!("Failed to get app config directory: {}", e))?;
 
         fs::create_dir_all(&config_dir)?;
         let config_path = config_dir.join("input-channels-conf-v1.json");

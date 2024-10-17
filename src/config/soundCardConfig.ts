@@ -20,7 +20,8 @@ export const babyfaceProConf: SoundcardConfig = {
                 phantom: "Mic-AN1 48V",
                 gain: "Mic-AN1 Gain",
                 pad: "Mic-AN1 PAD",
-            }
+            },
+            stereoCoupled: false
         },
         {
             displayName: "Mic 2",
@@ -30,7 +31,8 @@ export const babyfaceProConf: SoundcardConfig = {
                 phantom: "Mic-AN2 48V",
                 gain: "Mic-AN2 Gain",
                 pad: "Mic-AN2 PAD"
-            }
+            },
+            stereoCoupled: false
         },
         {
             displayName: "Line 3",
@@ -39,7 +41,8 @@ export const babyfaceProConf: SoundcardConfig = {
             switchNames: {
                 lineSens: "Sens.",
                 gain: "Line-IN3 Gain"
-            }
+            },
+            stereoCoupled: false
         },
         {
             displayName: "Line 4",
@@ -48,7 +51,8 @@ export const babyfaceProConf: SoundcardConfig = {
             switchNames: {
                 lineSens: "Sens.",
                 gain: "Line-IN4 Gain"
-            }
+            },
+            stereoCoupled: false
         }
     ],
     outputs: [

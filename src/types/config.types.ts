@@ -13,6 +13,7 @@ export interface AlsaInput {
   controlName: string;
   switchNames: AlsaInputSwitchNames
   type: InputType;
+  stereoCoupled: boolean
 }
 
 export interface AlsaOutput {
@@ -53,7 +54,7 @@ export interface SoundcardConfig {
   outputs: AlsaOutput[];
   playback: AlsaPlayback;
   inputSwitchValues: AlsaInputSwitchValues;
-  inputRange: InputRange
+  inputRange: InputRange;
 }
 
 export interface InputRange {
@@ -64,4 +65,10 @@ export interface InputRange {
 export interface AudioProfile {
   profileName: string;
   displayName: string;
+}
+
+export interface TauriInputChannelConfig {
+  control_name: string, 
+  display_name: string, 
+  stereo_coupled: boolean
 }
