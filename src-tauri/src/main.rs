@@ -4,33 +4,40 @@
 mod alsa;
 mod pipewire;
 mod usb;
+mod storage;
 
 use tauri::Manager;
 
 pub struct AppState {
     alsa_card_number: String,
     pipewire_card_id: String,
+    storage: storage::ConfigStorage
 }
 
 impl AppState {
-    pub fn new(card_name_alsa: &str, card_name_pipewire: &str) -> Result<Self, String> {
+    pub fn new(card_name_alsa: &str, card_name_pipewire: &str, app_handle: &tauri::AppHandle) -> Result<Self, String> {
         let alsa_card_number = alsa::general::get_card_number_by_name(card_name_alsa)?;
         let pipewire_card_id = pipewire::general::get_card_id_by_name(card_name_pipewire)?;
+        let storage = storage::ConfigStorage::new(app_handle).map_err(|e| e.to_string())?;
 
         Ok(Self {
             alsa_card_number,
             pipewire_card_id,
+            storage,
         })
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app_state = AppState::new("Babyface Pro", "RME_Babyface_Pro")?;
-
     tauri::Builder::default()
-        .plugin(tauri_plugin_shell::init())
-        .setup(|app| {
+    .plugin(tauri_plugin_shell::init())
+    .setup(|app| {
+            let app_handle = app.handle(); // Get an immutable AppHandle
+            let app_state = AppState::new("Babyface Pro", "RME_Babyface_Pro", app_handle)?;
             #[cfg(debug_assertions)] // only include this code on debug builds
+
+            app.manage(app_state);
+
             {
                 let window = app.get_webview_window("main").unwrap();
                 window.open_devtools();
@@ -38,7 +45,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Ok(())
         })
-        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             alsa::controller::get_alsa_volume,
             alsa::controller::set_alsa_volume,
@@ -62,6 +68,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // usb::controller::write_gain,
             // usb::controller::read_volume,
             // usb::controller::write_volume,
+            storage::controller::save_channel_config,
+            storage::controller::load_channel_config,
+            storage::controller::load_all_channels
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

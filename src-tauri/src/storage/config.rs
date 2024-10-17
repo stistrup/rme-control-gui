@@ -2,31 +2,18 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use serde::{Serialize, Deserialize};
-use tauri::AppHandle;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum ChannelType {
-    Mic,
-    Line,
-    Adat,
-}
+use tauri::{AppHandle, Manager}; // Ensure Manager is in scope
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ChannelConfig {
+pub struct InputChannelConfig {
+    pub control_name: String,
     pub display_name: String,
-    pub channel_type: ChannelType,
-    pub volume: f32,
-    pub gain: f32,
-    pub pad: bool,
-    pub phantom_power: bool,
+    pub stereo_coupled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SoundCardConfig {
-    pub display_name: String,
-    pub channels: HashMap<u32, ChannelConfig>,
-    pub active_profile: String,
-    pub buffer_size: u32,
+    pub channels: HashMap<String, InputChannelConfig>,
 }
 
 pub struct ConfigStorage {
@@ -37,10 +24,11 @@ impl ConfigStorage {
     pub fn new(app_handle: &AppHandle) -> Result<Self, Box<dyn std::error::Error>> {
         let config_dir = app_handle
             .path_resolver()
-            .app_config_dir()
-            .ok_or("Failed to get app config directory")?;
+            .app_config_dir() // This should return an Option<PathBuf>
+            .or(Err("Failed to get app config directory".into()))?; // Using or for error handling
+
         fs::create_dir_all(&config_dir)?;
-        let config_path = config_dir.join("soundcard_config.json");
+        let config_path = config_dir.join("input-channels-conf-v1.json");
         Ok(Self { config_path })
     }
 
@@ -57,10 +45,7 @@ impl ConfigStorage {
             Ok(config)
         } else {
             Ok(SoundCardConfig {
-                display_name: String::new(),
                 channels: HashMap::new(),
-                active_profile: String::new(),
-                buffer_size: 256, // Default buffer size
             })
         }
     }
