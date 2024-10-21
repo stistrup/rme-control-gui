@@ -1,6 +1,6 @@
 {
   "productName": "rme-babyface-control",
-  "version": "0.0.0",
+  "version": "1.0.4",
   "identifier": "steffes.mega.rme.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -12,7 +12,7 @@
     "windows": [
       {
         "title": "rme-babyface-control",
-        "width": 900,
+        "width": 1000,
         "height": 600
       }
     ],

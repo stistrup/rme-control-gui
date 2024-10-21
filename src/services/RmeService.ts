@@ -3,6 +3,7 @@ import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
 import { invoke } from "@tauri-apps/api/core";
 import { alsaToDB, dbToALSA } from "../utils/alsaValConversion";
+import { TauriInputChannelConfig } from "../types/config.types";
 
 export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
@@ -30,6 +31,19 @@ export class RmeService {
       } else {
         console.warn("Could not get active profiles");
       }
+
+      const inputChannelsConfig = await this.getInputChannelsConfig() as TauriInputChannelConfig[];
+
+      // Check if all channels have stored configs tauri storage. Otherwise init with soundCardConfig.ts
+      this.store.inputs.forEach((input) => {
+        const inputHasConfig = inputChannelsConfig.some(config => config.control_name === input.controlName)
+        if (!inputHasConfig) {
+          console.log('No input channel config found for', input.displayName, '. Setting default from soundCardConfig.ts')
+          this.setInputChannelConfig(input.controlName, input.displayName, input.stereoCoupled)
+        }
+      })
+
+      this.store.setInputChannelConfig(inputChannelsConfig)
 
       this.store.isInitialized = true
     } catch (error) {
@@ -171,6 +185,35 @@ export class RmeService {
       throw error;
     }
   };
+
+  public getInputChannelsConfig = async () => {
+    try {
+      const config = (await invoke("load_all_channels"));
+
+      return config
+    } catch (error) {
+      console.error(
+        `Failed to get volume for input channels config:`,
+        error
+      );
+      return null
+    }
+  }
+
+  public setInputChannelConfig = async (controlName: string, displayName: string, stereoCoupled: boolean) => {
+    try {
+      const result = (await invoke("save_channel_config", {
+        controlName,
+        displayName,
+        stereoCoupled
+      }) as number);
+
+      return result;
+    } catch (error) {
+      console.error("Failed to set channelConfig", error);
+      throw error;
+    }
+  }
 
   public setMainOutVolume = async (volume: number) => {
     const value = dbToALSA(volume)

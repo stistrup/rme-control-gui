@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
-import { AlsaInput, AlsaOutput, AlsaPlayback, AudioProfile } from "../types/config.types";
+import { AlsaInput, AlsaOutput, AlsaPlayback, AudioProfile, TauriInputChannelConfig } from "../types/config.types";
 import { audioProfilesConfig, babyfaceProConf } from "../config/soundCardConfig";
 
 export const useRmeStore = defineStore("rme", () => {
@@ -33,6 +33,17 @@ export const useRmeStore = defineStore("rme", () => {
     return alsaControls.value[controlName]
   }
 
+  const setInputChannelConfig = (inputChannels: TauriInputChannelConfig[]) => {
+    inputs.value.forEach((input) => {
+      const inputChannelConf = inputChannels.find(inputChannel => inputChannel.control_name === input.controlName)
+
+      if (inputChannelConf) {
+        input.displayName = inputChannelConf.display_name
+        input.stereoCoupled = inputChannelConf.stereo_coupled
+      }
+    })
+  }
+
   const setSupportedProfiles = (profiles: string[]) => {
     supportedProfiles.value = profiles;
   };
@@ -55,6 +66,7 @@ export const useRmeStore = defineStore("rme", () => {
     getControlByName,
     setActiveProfile,
     setControls,
+    setInputChannelConfig,
     setSupportedProfiles,
     updateControl,
   };
