@@ -34,7 +34,6 @@ export const useRmeStore = defineStore("rme", () => {
   }
 
   const setInputChannelConfig = (inputChannels: TauriInputChannelConfig[]) => {
-    console.error('Inputs before:', inputs.value)
     inputs.value.forEach((input) => {
       const inputChannelConf = inputChannels.find(inputChannel => inputChannel.control_name === input.controlName)
 
@@ -43,8 +42,6 @@ export const useRmeStore = defineStore("rme", () => {
         input.stereoCoupled = inputChannelConf.stereo_coupled
       }
     })
-
-    console.error('and after',inputs.value)
   }
 
   const setSupportedProfiles = (profiles: string[]) => {

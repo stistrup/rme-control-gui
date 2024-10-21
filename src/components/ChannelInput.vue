@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from "vue";
+import { computed, inject, nextTick, onMounted, ref } from "vue";
 import Fader from "./Fader.vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
@@ -35,6 +35,49 @@ const currentLineSens = ref<string | null>(null);
 if (!rmeService) {
   throw new Error("Could not load RME service");
 }
+
+const isEditing = ref(false);
+const editedDisplayName = ref(props.inputChannel.displayName);
+const inputRef = ref<HTMLInputElement | null>(null);
+
+const startEditing = () => {
+  isEditing.value = true;
+  editedDisplayName.value = props.inputChannel.displayName;
+  nextTick(() => {
+    if (inputRef.value) {
+      inputRef.value.focus();
+    }
+  });
+};
+
+const saveDisplayName = async () => {
+  if (!rmeService) return;
+  
+  try {
+
+    await rmeService.setInputChannelConfig(
+      props.inputChannel.controlName,
+      editedDisplayName.value,
+      props.inputChannel.stereoCoupled
+    );
+    
+    // Update the store
+    const index = rmeStore.inputs.findIndex(input => input.controlName === props.inputChannel.controlName);
+    if (index !== -1) {
+      rmeStore.inputs[index].displayName = editedDisplayName.value;
+    }
+    
+    console.log("Updated displayname for", props.inputChannel.controlName, 'to', editedDisplayName.value)
+    isEditing.value = false;
+  } catch (error) {
+    console.error("Failed to save display name:", error);
+  }
+};
+
+const cancelEditing = () => {
+  isEditing.value = false;
+  editedDisplayName.value = props.inputChannel.displayName;
+};
 
 const getInputGain = async () => {
   if (channelIndex.value == null) return null
@@ -173,7 +216,20 @@ onMounted(async () => {
 
 <template>
   <div :class="[$style.channelContainer, { [$style.firstChannel]: channelIndex === 0 }]">
-    <p :class="$style.label">{{ inputChannel.displayName }}</p>
+    <div :class="$style.labelContainer">
+      <p v-if="!isEditing" :class="$style.label" @click="startEditing">
+        {{ inputChannel.displayName }}
+      </p>
+      <input
+        v-else
+        ref="inputRef"
+        v-model="editedDisplayName"
+        :class="$style.labelInput"
+        @keyup.enter="saveDisplayName"
+        @keyup.esc="cancelEditing"
+        @blur="saveDisplayName"
+      />
+    </div>
     <div :class="$style.controlsContainer">
       <Fader
         v-if="volumeBoundries"
@@ -351,5 +407,26 @@ onMounted(async () => {
 
 .gainComponent {
   margin-bottom: 20px;
+}
+
+.labelContainer {
+  width: 100%;
+  text-align: center;
+}
+
+.label {
+  cursor: pointer;
+}
+
+.labelInput {
+  width: 134px;
+  text-align: center;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  padding: 2px;
+  margin: 13px 0;
+  border: 1px solid var(--channel-border-color);
+  border-radius: 3px;
 }
 </style>
