@@ -34,15 +34,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .setup(|app| {
             let app_handle = app.handle(); // Get an immutable AppHandle
             let app_state = AppState::new("Babyface Pro", "RME_Babyface_Pro", app_handle)?;
-            #[cfg(debug_assertions)] // only include this code on debug builds
+            // #[cfg(debug_assertions)] // only include this code on debug builds
 
             app.manage(app_state);
 
-            {
-                let window = app.get_webview_window("main").unwrap();
-                window.open_devtools();
-                window.close_devtools();
-            }
+            // {
+                // let window = app.get_webview_window("main").unwrap();
+                // window.open_devtools();
+                // window.close_devtools();
+            // }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             pipewire::controller::set_pipewire_profile,
             pipewire::controller::get_pipewire_profiles,
             pipewire::controller::set_buffer_size,
-            usb::controller::set_main_out_volume,
+            // usb::controller::set_main_out_volume,
             // usb::controller::write_control,
 
             // usb::controller::read_gain,
