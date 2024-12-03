@@ -7,6 +7,7 @@ import { useRmeStore } from "../stores/rmeStore";
 import { AlsaInput, InputType, OutputType } from "../types/config.types";
 import { alsaToDB } from "../utils/alsaValConversion";
 import { formatRoutingControlName } from "../utils/bbfproControlName";
+import linkIcon from '../assets/images/link.png'
 
 interface ChannelProps {
   inputChannel: AlsaInput;
@@ -22,6 +23,8 @@ const inputGain = ref<number | null>(null)
 
 const volumeBoundries = ref<{min: number, max: number} | null>(null)
 const inputGainBoundries = ref<{min: number, max: number} | null>(null)
+
+const canBeStereoCoupled = ref(true);
 
 const channelIndex = computed(() => {
   const index = rmeStore.inputs.findIndex(input => input.controlName === props.inputChannel.controlName)
@@ -145,8 +148,6 @@ const setLineSens = async (e: Event) => {
   const target = e.target as HTMLSelectElement;
   const value = target.value;
 
-  console.log('VALUE!!', value)
-
   if (channelIndex.value == null) return
   if (!props.inputChannel.switchNames.lineSens) return;
   const result = await rmeService!.setLineSensitivity(channelIndex.value, value);
@@ -194,7 +195,7 @@ onMounted(async () => {
 
   if (props.inputChannel.type === InputType.LINE) inputControls.limits.max = inputControls.limits.max / 2
 
-  const volBoundriesAlsa = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME:
+  const volBoundriesAlsa = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME: Takes analog input 1 as truth for all channels
 
   const volBoundriesDbMin = alsaToDB(volBoundriesAlsa.limits.min)
   const volBoundriesDbMax = alsaToDB(volBoundriesAlsa.limits.max)
@@ -288,6 +289,16 @@ onMounted(async () => {
           icon="headphones.png"
           @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
         />
+        <div :class="$style.stereoButtonContainer">
+          <button 
+            v-if="canBeStereoCoupled"
+            :class="$style.stereoButton"
+            @click="() => console.log('Toggle stereo coupling')"
+          >
+          <img :class="$style.linkIcon" :src="linkIcon"/>
+            <span>→</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -428,5 +439,31 @@ onMounted(async () => {
   margin: 13px 0;
   border: 1px solid var(--channel-border-color);
   border-radius: 3px;
+}
+
+.stereoButtonContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.stereoButton {
+  padding: 3px 6px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+  background: none;
+}
+
+.stereoButton:hover {
+  background-color: var(--button-bg-color);
+  color: var(--button-text-color)
+}
+
+.linkIcon{
+  height: 15px;
+  filter:opacity(0.7);
 }
 </style>

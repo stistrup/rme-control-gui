@@ -337,17 +337,17 @@ export class RmeService {
 
     const input = this.store.soundCardConfig.inputs[inputIndex]
 
-    if (!input.switchNames.phantom) {
+    if (!input.switchNames.pad) {
       console.error('This input does not support phantom. Cannot get')
       return
     }
 
     try {
-      const phantomState = (await invoke("get_pad_state", {
-        controlName: input.switchNames.phantom,
+      const padState = (await invoke("get_pad_state", {
+        controlName: input.switchNames.pad,
       })) as boolean;
-      console.log("Phantom state for", input.displayName, ':', phantomState);
-      return phantomState;
+      console.log("Phantom state for", input.displayName, ':', padState);
+      return padState;
     } catch (error) {
       console.error("Failed to get initial states:", error);
       throw error;
