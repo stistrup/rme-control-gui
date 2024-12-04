@@ -26,10 +26,12 @@ export const useRmeStore = defineStore("rme", () => {
   // Add a channel pair to stereo mapping
   const addStereoMapping = (channelIndex: number) => {
 
+    const isLeftChannel = channelIndex % 2 === 0
+
     let leftChannelId
     let rightChannelId
 
-    if (channelIndex % 2 === 0) {
+    if (isLeftChannel) {
       leftChannelId = inputs.value.find(input => input.inputIndex === channelIndex)?.controlName
       rightChannelId = inputs.value.find(input => input.inputIndex === (channelIndex + 1))?.controlName
     } else {
@@ -42,6 +44,8 @@ export const useRmeStore = defineStore("rme", () => {
         left: leftChannelId,
         right: rightChannelId
       };
+    } else {
+      console.error('Couldnt find both channels. Left:', leftChannelId, 'Right:', rightChannelId)
     }
   };
 
