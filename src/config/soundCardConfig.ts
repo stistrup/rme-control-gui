@@ -13,6 +13,7 @@ export enum InputType {
 export const babyfaceProConf: SoundcardConfig = {
     inputs: [
         {
+            inputIndex: 0,
             displayName: "Mic 1",
             controlName: "Mic-AN1",
             type: InputType.MIC,
@@ -24,6 +25,7 @@ export const babyfaceProConf: SoundcardConfig = {
             stereoCoupled: false
         },
         {
+            inputIndex: 1,
             displayName: "Mic 2",
             controlName: "Mic-AN2",
             type: InputType.MIC,
@@ -35,6 +37,7 @@ export const babyfaceProConf: SoundcardConfig = {
             stereoCoupled: false
         },
         {
+            inputIndex: 2,
             displayName: "Line 3",
             controlName: "Line-IN3",
             type: InputType.LINE,
@@ -45,6 +48,7 @@ export const babyfaceProConf: SoundcardConfig = {
             stereoCoupled: false
         },
         {
+            inputIndex: 3,
             displayName: "Line 4",
             controlName: "Line-IN4",
             type: InputType.LINE,

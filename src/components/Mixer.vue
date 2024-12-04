@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRmeStore } from "../stores/rmeStore";
 import ChannelInput from "./ChannelInput.vue";
+import ChannelInputStereo from "./ChannelInputStereo.vue";
 import MonitorControl from "./MonitorControl.vue";
 import PlaybackControl from "./PlaybackControl.vue";
 
@@ -13,8 +14,8 @@ const rmeStore = useRmeStore();
       <template v-for="channel in rmeStore.visibleChannels" :key="channel.controlName">
         <ChannelInputStereo
           v-if="rmeStore.stereoMappings[channel.controlName]"
-          :leftChannel="channel"
-          :rightChannel="rmeStore.inputs.find(ch => ch.controlName === rmeStore.stereoMappings[channel.controlName].right)"
+          :leftChannelId="rmeStore.stereoMappings[channel.controlName].left"
+          :rightChannelId="rmeStore.stereoMappings[channel.controlName].right"
         />
         <ChannelInput
           v-else

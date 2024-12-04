@@ -9,8 +9,8 @@ import { alsaToDB } from "../utils/alsaValConversion";
 import { formatRoutingControlName } from "../utils/bbfproControlName";
 
 interface StereoChannelProps {
-  leftChannel: AlsaInput;
-  rightChannel: AlsaInput;
+  leftChannelId: AlsaInput["controlName"];
+  rightChannelId: AlsaInput["controlName"]
 }
 
 const props = defineProps<StereoChannelProps>();
@@ -21,13 +21,16 @@ const routingVolumeMain = ref({left: 0, right: 0});
 const routingVolumeHp = ref({left: 0, right: 0});
 const inputGain = ref<{left: number | null, right: number | null}>({left: null, right: null});
 
+const leftChannel = ref(rmeStore.inputs.find(input => input.controlName === props.leftChannelId))
+const rightChannel = ref(rmeStore.inputs.find(input => input.controlName === props.rightChannelId))
+
+if (!rightChannel || !leftChannel) {
+  throw new Error(`Couldnt find channels on stereo channel. Left: ${leftChannel.value?.displayName}, Right: ${rightChannel.value?.displayName}`)
+}
+
 const volumeBoundries = ref<{min: number, max: number} | null>(null);
 const inputGainBoundries = ref<{min: number, max: number} | null>(null);
 
-const channelIndices = computed(() => ({
-  left: rmeStore.inputs.findIndex(input => input.controlName === props.leftChannel.controlName),
-  right: rmeStore.inputs.findIndex(input => input.controlName === props.rightChannel.controlName)
-}));
 
 const currentPhantomState = ref<{left: boolean | null, right: boolean | null}>({left: null, right: null});
 const currentPadState = ref<{left: boolean | null, right: boolean | null}>({left: null, right: null});
@@ -38,12 +41,12 @@ if (!rmeService) {
 }
 
 const isEditing = ref(false);
-const editedDisplayName = ref(props.leftChannel.displayName);
+const editedDisplayName = ref(leftChannel.value!.displayName);
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const startEditing = () => {
   isEditing.value = true;
-  editedDisplayName.value = props.leftChannel.displayName;
+  editedDisplayName.value = leftChannel.value!.displayName;
   nextTick(() => {
     if (inputRef.value) {
       inputRef.value.focus();
@@ -58,27 +61,19 @@ const saveDisplayName = async () => {
     // Update both channels to maintain stereo naming
     await Promise.all([
       rmeService.setInputChannelConfig(
-        props.leftChannel.controlName,
+        leftChannel.value!.controlName,
         editedDisplayName.value + " L",
         true
       ),
       rmeService.setInputChannelConfig(
-        props.rightChannel.controlName,
+        leftChannel.value!.controlName,
         editedDisplayName.value + " R",
         true
       )
     ]);
-    
-    // Update the store for both channels
-    const leftIndex = rmeStore.inputs.findIndex(input => input.controlName === props.leftChannel.controlName);
-    const rightIndex = rmeStore.inputs.findIndex(input => input.controlName === props.rightChannel.controlName);
-    
-    if (leftIndex !== -1) {
-      rmeStore.inputs[leftIndex].displayName = editedDisplayName.value + " L";
-    }
-    if (rightIndex !== -1) {
-      rmeStore.inputs[rightIndex].displayName = editedDisplayName.value + " R";
-    }
+  
+    rmeStore.inputs[leftChannel.value!.inputIndex].displayName = editedDisplayName.value + " L";
+    rmeStore.inputs[rightChannel.value!.inputIndex].displayName = editedDisplayName.value + " R";
     
     isEditing.value = false;
   } catch (error) {
@@ -88,18 +83,16 @@ const saveDisplayName = async () => {
 
 const cancelEditing = () => {
   isEditing.value = false;
-  editedDisplayName.value = props.leftChannel.displayName;
+  editedDisplayName.value = leftChannel.value!.displayName;
 };
 
 const getInputGain = async () => {
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return {left: null, right: null};
-  
   const [leftGain, rightGain] = await Promise.all([
-    rmeService.getInputGain(props.leftChannel.switchNames.gain),
-    rmeService.getInputGain(props.rightChannel.switchNames.gain)
+    rmeService.getInputGain(leftChannel.value!.switchNames.gain),
+    rmeService.getInputGain(rightChannel.value!.switchNames.gain)
   ]);
 
-  if (props.leftChannel.type === InputType.LINE) {
+  if (leftChannel.value!.type === InputType.LINE) {
     return {
       left: leftGain ? leftGain / 2 : null,
       right: rightGain ? rightGain / 2 : null
@@ -113,21 +106,21 @@ const getInputGain = async () => {
 };
 
 const setInputGain = async (newValue: number) => {
-  const gainValue = props.leftChannel.type === InputType.LINE ? newValue * 2 : newValue;
+  const gainValue = leftChannel.value!.type === InputType.LINE ? newValue * 2 : newValue;
   await Promise.all([
-    rmeService.setInputGain(props.leftChannel.switchNames.gain, gainValue),
-    rmeService.setInputGain(props.rightChannel.switchNames.gain, gainValue)
+    rmeService.setInputGain(leftChannel.value!.switchNames.gain, gainValue),
+    rmeService.setInputGain(rightChannel.value!.switchNames.gain, gainValue)
   ]);
 };
 
 const getOuputRoutingVolume = async (outputType: OutputType) => {
   const leftControls = formatRoutingControlName(
-    props.leftChannel.controlName, 
+    leftChannel.value!.controlName, 
     outputType, 
     rmeStore.soundCardConfig.outputs
   );
   const rightControls = formatRoutingControlName(
-    props.rightChannel.controlName, 
+    rightChannel.value!.controlName, 
     outputType, 
     rmeStore.soundCardConfig.outputs
   );
@@ -144,12 +137,12 @@ const getOuputRoutingVolume = async (outputType: OutputType) => {
 
 const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
   const leftControls = formatRoutingControlName(
-    props.leftChannel.controlName, 
+    leftChannel.value!.controlName, 
     outputType,
     rmeStore.soundCardConfig.outputs
   );
   const rightControls = formatRoutingControlName(
-    props.rightChannel.controlName, 
+    rightChannel.value!.controlName, 
     outputType,
     rmeStore.soundCardConfig.outputs
   );
@@ -164,13 +157,12 @@ const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
 
 // Synchronize phantom power for both channels
 const setPhantomState = async () => {
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return;
-  if (!props.leftChannel.switchNames.phantom || !props.rightChannel.switchNames.phantom) return;
+  if (!leftChannel.value!.switchNames.phantom || !rightChannel.value!.switchNames.phantom) return;
   
   const newState = !currentPhantomState.value.left;
   const results = await Promise.all([
-    rmeService.setPhantomPower(channelIndices.value.left, newState),
-    rmeService.setPhantomPower(channelIndices.value.right, newState)
+    rmeService.setPhantomPower(leftChannel.value!.inputIndex, newState),
+    rmeService.setPhantomPower(leftChannel.value!.inputIndex, newState)
   ]);
 
   if (results[0] && results[1]) {
@@ -179,12 +171,11 @@ const setPhantomState = async () => {
 };
 
 const getPhantomState = async () => {
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return {left: null, right: null};
-  if (!props.leftChannel.switchNames.phantom || !props.rightChannel.switchNames.phantom) return {left: null, right: null};
+  if (!leftChannel.value!.switchNames.phantom || !rightChannel.value!.switchNames.phantom) return {left: null, right: null};
 
   const [leftState, rightState] = await Promise.all([
-    rmeService.getPhantomState(channelIndices.value.left),
-    rmeService.getPhantomState(channelIndices.value.right)
+    rmeService.getPhantomState(leftChannel.value!.inputIndex),
+    rmeService.getPhantomState(rightChannel.value!.inputIndex)
   ]);
 
   return {left: leftState ?? null, right: rightState ?? null};
@@ -194,12 +185,11 @@ const setLineSens = async (e: Event) => {
   const target = e.target as HTMLSelectElement;
   const value = target.value;
 
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return;
-  if (!props.leftChannel.switchNames.lineSens || !props.rightChannel.switchNames.lineSens) return;
+  if (!leftChannel.value!.switchNames.lineSens || !rightChannel.value!.switchNames.lineSens) return;
   
   const results = await Promise.all([
-    rmeService.setLineSensitivity(channelIndices.value.left, value),
-    rmeService.setLineSensitivity(channelIndices.value.right, value)
+    rmeService.setLineSensitivity(leftChannel.value!.inputIndex, value),
+    rmeService.setLineSensitivity(rightChannel.value!.inputIndex, value)
   ]);
 
   if (results[0] && results[1]) {
@@ -208,25 +198,23 @@ const setLineSens = async (e: Event) => {
 };
 
 const getLineSens = async () => {
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return {left: null, right: null};
-  if (!props.leftChannel.switchNames.lineSens || !props.rightChannel.switchNames.lineSens) return {left: null, right: null};
+  if (!leftChannel.value!.switchNames.lineSens || !rightChannel.value!.switchNames.lineSens) return {left: null, right: null};
 
   const [leftSens, rightSens] = await Promise.all([
-    rmeService.getLineSensitivity(channelIndices.value.left),
-    rmeService.getLineSensitivity(channelIndices.value.right)
+    rmeService.getLineSensitivity(leftChannel.value!.inputIndex),
+    rmeService.getLineSensitivity(rightChannel.value!.inputIndex)
   ]);
 
   return {left: leftSens ?? null, right: rightSens ?? null};
 };
 
 const setPadState = async () => {
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return;
-  if (!props.leftChannel.switchNames.pad || !props.rightChannel.switchNames.pad) return;
+  if (!leftChannel.value!.switchNames.pad || !rightChannel.value!.switchNames.pad) return;
   
   const newState = !currentPadState.value.left;
   const results = await Promise.all([
-    rmeService.setPadState(channelIndices.value.left, newState),
-    rmeService.setPadState(channelIndices.value.right, newState)
+    rmeService.setPadState(leftChannel.value!.inputIndex, newState),
+    rmeService.setPadState(rightChannel.value!.inputIndex, newState)
   ]);
 
   if (results[0] && results[1]) {
@@ -235,12 +223,11 @@ const setPadState = async () => {
 };
 
 const getPadState = async () => {
-  if (channelIndices.value.left === -1 || channelIndices.value.right === -1) return {left: null, right: null};
-  if (!props.leftChannel.switchNames.pad || !props.rightChannel.switchNames.pad) return {left: null, right: null};
+  if (!leftChannel.value!.switchNames.pad || !rightChannel.value!.switchNames.pad) return {left: null, right: null};
 
   const [leftState, rightState] = await Promise.all([
-    rmeService.getPadState(channelIndices.value.left),
-    rmeService.getPadState(channelIndices.value.right)
+    rmeService.getPadState(leftChannel.value!.inputIndex),
+    rmeService.getPadState(rightChannel.value!.inputIndex)
   ]);
 
   return {left: leftState ?? null, right: rightState ?? null};
@@ -259,13 +246,13 @@ onMounted(async () => {
   currentPadState.value = padState;
   inputGain.value = gains;
 
-  let inputControls = rmeStore.getControlByName(props.leftChannel.switchNames.gain);
+  let inputControls = rmeStore.getControlByName(leftChannel.value!.switchNames.gain);
 
-  if (props.leftChannel.type === InputType.LINE) {
+  if (leftChannel.value!.type === InputType.LINE) {
     inputControls.limits.max = inputControls.limits.max / 2;
   }
 
-  const volBoundriesAlsa = rmeStore.getControlByName(`${props.leftChannel.controlName}-AN1`);
+  const volBoundriesAlsa = rmeStore.getControlByName(`${leftChannel.value!.controlName}-AN1`);
 
   const volBoundriesDbMin = alsaToDB(volBoundriesAlsa.limits.min);
   const volBoundriesDbMax = alsaToDB(volBoundriesAlsa.limits.max);
@@ -284,7 +271,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div :class="[$style.channelContainer, { [$style.firstChannel]: channelIndices.left === 0 }]">
+  <div :class="[$style.channelContainer, { [$style.firstChannel]: leftChannel!.inputIndex % 2 === 0 }]">
     <div :class="$style.labelContainer">
       <p v-if="!isEditing" :class="$style.label" @click="startEditing">
         {{ editedDisplayName }}
@@ -312,14 +299,14 @@ onMounted(async () => {
         <div :class="$style.inputSwitchesContainer">
           <div :class="$style.buttonGroup">
             <button
-              v-if="leftChannel.switchNames.phantom"
+              v-if="leftChannel?.switchNames.phantom"
               :class="[$style.switchButton, $style.phantomButton, { [$style.active]: currentPhantomState.left }]"
               @click="setPhantomState"
             >
               48v
             </button>
             <button
-              v-if="leftChannel.switchNames.pad"
+              v-if="leftChannel?.switchNames.pad"
               :class="[$style.switchButton, $style.padButton, { [$style.active]: currentPadState.left }]"
               @click="setPadState"
             >

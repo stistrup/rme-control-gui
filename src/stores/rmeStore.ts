@@ -24,11 +24,25 @@ export const useRmeStore = defineStore("rme", () => {
   const isInitialized = ref<boolean | null>(null);
 
   // Add a channel pair to stereo mapping
-  const addStereoMapping = (leftChannelId: string, rightChannelId: string) => {
-    stereoMappings.value[leftChannelId] = {
-      left: leftChannelId,
-      right: rightChannelId
-    };
+  const addStereoMapping = (channelIndex: number) => {
+
+    let leftChannelId
+    let rightChannelId
+
+    if (channelIndex % 2 === 0) {
+      leftChannelId = inputs.value.find(input => input.inputIndex === channelIndex)?.controlName
+      rightChannelId = inputs.value.find(input => input.inputIndex === (channelIndex + 1))?.controlName
+    } else {
+      leftChannelId = inputs.value.find(input => input.inputIndex === (channelIndex - 1))?.controlName
+      rightChannelId = inputs.value.find(input => input.inputIndex === channelIndex)?.controlName
+    }
+
+    if (leftChannelId && rightChannelId) {
+      stereoMappings.value[leftChannelId] = {
+        left: leftChannelId,
+        right: rightChannelId
+      };
+    }
   };
 
   // Remove a stereo mapping

@@ -11,6 +11,7 @@ export enum InputType {
 export interface AlsaInput {
   displayName: string;
   controlName: string;
+  inputIndex: number;
   switchNames: AlsaInputSwitchNames
   type: InputType;
   stereoCoupled: boolean
