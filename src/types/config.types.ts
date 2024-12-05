@@ -10,6 +10,7 @@ export enum InputType {
 
 export interface AlsaInput {
   displayName: string;
+  displayNameStereo?: string;
   controlName: string;
   inputIndex: number;
   switchNames: AlsaInputSwitchNames

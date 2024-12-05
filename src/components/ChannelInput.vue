@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref } from "vue";
 import Fader from "./Fader.vue";
+import ChannelInputLabel from "./ChannelInputLabel.vue";
 import Knob from "./Knob.vue";
 import { RmeService } from "../services/RmeService";
 import { useRmeStore } from "../stores/rmeStore";
@@ -10,7 +11,8 @@ import { formatRoutingControlName } from "../utils/bbfproControlName";
 import linkIcon from '../assets/images/link.png'
 
 interface ChannelProps {
-  inputChannel: AlsaInput;
+  leftInput: AlsaInput;
+  rightInput?: AlsaInput;
 }
 
 const props = defineProps<ChannelProps>();
@@ -27,7 +29,7 @@ const inputGainBoundries = ref<{min: number, max: number} | null>(null)
 const canBeStereoCoupled = ref(true);
 
 const channelIndex = computed(() => {
-  const index = rmeStore.inputs.findIndex(input => input.controlName === props.inputChannel.controlName)
+  const index = rmeStore.inputs.findIndex(input => input.controlName === props.leftInput.controlName)
   return index === -1 ? null : index
 })
 
@@ -39,67 +41,24 @@ if (!rmeService) {
   throw new Error("Could not load RME service");
 }
 
-const isEditing = ref(false);
-const editedDisplayName = ref(props.inputChannel.displayName);
-const inputRef = ref<HTMLInputElement | null>(null);
-
-const startEditing = () => {
-  isEditing.value = true;
-  editedDisplayName.value = props.inputChannel.displayName;
-  nextTick(() => {
-    if (inputRef.value) {
-      inputRef.value.focus();
-    }
-  });
-};
-
-const saveDisplayName = async () => {
-  if (!rmeService) return;
-  
-  try {
-
-    await rmeService.setInputChannelConfig(
-      props.inputChannel.controlName,
-      editedDisplayName.value,
-      props.inputChannel.stereoCoupled
-    );
-    
-    // Update the store
-    const index = rmeStore.inputs.findIndex(input => input.controlName === props.inputChannel.controlName);
-    if (index !== -1) {
-      rmeStore.inputs[index].displayName = editedDisplayName.value;
-    }
-    
-    console.log("Updated displayname for", props.inputChannel.controlName, 'to', editedDisplayName.value)
-    isEditing.value = false;
-  } catch (error) {
-    console.error("Failed to save display name:", error);
-  }
-};
-
-const cancelEditing = () => {
-  isEditing.value = false;
-  editedDisplayName.value = props.inputChannel.displayName;
-};
-
 const getInputGain = async () => {
   if (channelIndex.value == null) return null
-  let gain = await rmeService.getInputGain(props.inputChannel.switchNames.gain)
+  let gain = await rmeService.getInputGain(props.leftInput.switchNames.gain)
 
-  if (gain && props.inputChannel.type === InputType.LINE) gain = gain / 2
+  if (gain && props.leftInput.type === InputType.LINE) gain = gain / 2
 
   return gain ?? null
 }
 
 const setInputGain = async (newValue: number) => {
-  if (props.inputChannel.type === InputType.LINE) newValue = newValue * 2
-  rmeService.setInputGain(props.inputChannel.switchNames.gain, newValue)
+  if (props.leftInput.type === InputType.LINE) newValue = newValue * 2
+  rmeService.setInputGain(props.leftInput.switchNames.gain, newValue)
 }
 
 const getOuputRoutingVolume = async (outputType: OutputType) => {
   
   const controlNames = formatRoutingControlName(
-    props.inputChannel.controlName, 
+    props.leftInput.controlName, 
     outputType, 
     rmeStore.soundCardConfig.outputs
   )
@@ -117,7 +76,7 @@ const getOuputRoutingVolume = async (outputType: OutputType) => {
 
 const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
 
-  const controlNames = formatRoutingControlName(props.inputChannel.controlName, outputType,rmeStore.soundCardConfig.outputs)
+  const controlNames = formatRoutingControlName(props.leftInput.controlName, outputType,rmeStore.soundCardConfig.outputs)
   if(!controlNames) return
 
   rmeService.setAlsaVolumeStereo(controlNames.left, controlNames.right, newValue)
@@ -126,7 +85,7 @@ const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
 
 const setPhantomState = async () => {
   if (channelIndex.value == null) return
-  if (!props.inputChannel.switchNames.phantom) return;
+  if (!props.leftInput.switchNames.phantom) return;
   const newState = !currentPhantomState.value;
   const result = await rmeService!.setPhantomPower(channelIndex.value, newState);
 
@@ -137,7 +96,7 @@ const setPhantomState = async () => {
 
 const getPhantomState = async () => {
   if (channelIndex.value == null) return null
-  if (!props.inputChannel.switchNames.phantom) return null;
+  if (!props.leftInput.switchNames.phantom) return null;
 
   const phantomState = await rmeService!.getPhantomState(channelIndex.value);
 
@@ -149,7 +108,7 @@ const setLineSens = async (e: Event) => {
   const value = target.value;
 
   if (channelIndex.value == null) return
-  if (!props.inputChannel.switchNames.lineSens) return;
+  if (!props.leftInput.switchNames.lineSens) return;
   const result = await rmeService!.setLineSensitivity(channelIndex.value, value);
   if (result) {
     currentLineSens.value = value;
@@ -158,7 +117,7 @@ const setLineSens = async (e: Event) => {
 
 const getLineSens = async () => {
   if (channelIndex.value == null) return null
-  if (!props.inputChannel.switchNames.lineSens) return null;
+  if (!props.leftInput.switchNames.lineSens) return null;
 
   const newSens = await rmeService!.getLineSensitivity(channelIndex.value);
 
@@ -167,7 +126,7 @@ const getLineSens = async () => {
 
 const setPadState = async () => {
   if (channelIndex.value == null) return
-  if (!props.inputChannel.switchNames.pad) return;
+  if (!props.leftInput.switchNames.pad) return;
   const newState = !currentPadState.value;
   const result = await rmeService.setPadState(channelIndex.value, newState);
 
@@ -178,7 +137,7 @@ const setPadState = async () => {
 
 const getPadState = async () => {
   if (channelIndex.value == null) return null
-  if (!props.inputChannel.switchNames.pad) return null;
+  if (!props.leftInput.switchNames.pad) return null;
 
   const padState = await rmeService.getPadState(channelIndex.value);
 
@@ -187,8 +146,8 @@ const getPadState = async () => {
 
 const handleStereoCouple = (e: any) => {
   if (!canBeStereoCoupled.value) return
-  rmeStore.addStereoMapping(props.inputChannel.inputIndex)
-  console.error(props.inputChannel.displayName)
+  rmeStore.addStereoMapping(props.leftInput.inputIndex)
+  console.error(props.leftInput.displayName)
 }
 
 onMounted(async () => {
@@ -197,11 +156,11 @@ onMounted(async () => {
   inputGain.value = await getInputGain();
   currentPadState.value = await getPadState();
 
-  let inputControls = rmeStore.getControlByName(props.inputChannel.switchNames.gain)
+  let inputControls = rmeStore.getControlByName(props.leftInput.switchNames.gain)
 
-  if (props.inputChannel.type === InputType.LINE) inputControls.limits.max = inputControls.limits.max / 2
+  if (props.leftInput.type === InputType.LINE) inputControls.limits.max = inputControls.limits.max / 2
 
-  const volBoundriesAlsa = rmeStore.getControlByName(`${props.inputChannel.controlName}-AN1`) // FIXME: Takes analog input 1 as truth for all channels
+  const volBoundriesAlsa = rmeStore.getControlByName(`${props.leftInput.controlName}-AN1`) // FIXME: Takes analog input 1 as truth for all channels
 
   const volBoundriesDbMin = alsaToDB(volBoundriesAlsa.limits.min)
   const volBoundriesDbMax = alsaToDB(volBoundriesAlsa.limits.max)
@@ -215,7 +174,7 @@ onMounted(async () => {
   if (levelsMain) routingVolumeMain.value = levelsMain
   if (levelsHp) routingVolumeHp.value = levelsHp
 
-  console.log(props.inputChannel.displayName, levelsMain, levelsHp)
+  console.log(props.leftInput.displayName, levelsMain, levelsHp)
   console.log('boundries', volumeBoundries.value)
 
 });
@@ -223,20 +182,7 @@ onMounted(async () => {
 
 <template>
   <div :class="[$style.channelContainer, { [$style.firstChannel]: channelIndex === 0 }]">
-    <div :class="$style.labelContainer">
-      <p v-if="!isEditing" :class="$style.label" @click="startEditing">
-        {{ inputChannel.displayName }}
-      </p>
-      <input
-        v-else
-        ref="inputRef"
-        v-model="editedDisplayName"
-        :class="$style.labelInput"
-        @keyup.enter="saveDisplayName"
-        @keyup.esc="cancelEditing"
-        @blur="saveDisplayName"
-      />
-    </div>
+    <ChannelInputLabel :input="leftInput"/>
     <div :class="$style.controlsContainer">
       <Fader
         v-if="volumeBoundries"
@@ -250,14 +196,14 @@ onMounted(async () => {
         <div :class="$style.inputSwitchesContainer">
           <div :class="$style.buttonGroup">
             <button
-              v-if="inputChannel.switchNames.phantom"
+              v-if="leftInput.switchNames.phantom"
               :class="[$style.switchButton, $style.phantomButton, { [$style.active]: currentPhantomState }]"
               @click="setPhantomState"
             >
               48v
             </button>
             <button
-              v-if="inputChannel.switchNames.pad"
+              v-if="leftInput.switchNames.pad"
               :class="[$style.switchButton, $style.padButton, { [$style.active]: currentPadState }]"
               @click="setPadState"
             >
@@ -265,7 +211,7 @@ onMounted(async () => {
             </button>
           </div>
           <select
-            v-if="inputChannel.type === InputType.LINE"
+            v-if="leftInput.type === InputType.LINE"
             :class="$style.lineSensSelect"
             :value="currentLineSens"
             @change="setLineSens"
@@ -283,7 +229,7 @@ onMounted(async () => {
           :min="inputGainBoundries.min"
           :max="inputGainBoundries.max"
           :size="60"
-          :step="inputChannel.type === InputType.LINE ? 0.5 : 1"
+          :step="leftInput.type === InputType.LINE ? 0.5 : 1"
           @newValue="setInputGain"
         />
         <Knob
@@ -424,27 +370,6 @@ onMounted(async () => {
 
 .gainComponent {
   margin-bottom: 20px;
-}
-
-.labelContainer {
-  width: 100%;
-  text-align: center;
-}
-
-.label {
-  cursor: pointer;
-}
-
-.labelInput {
-  width: 134px;
-  text-align: center;
-  font-family: inherit;
-  font-weight: inherit;
-  font-size: inherit;
-  padding: 2px;
-  margin: 13px 0;
-  border: 1px solid var(--channel-border-color);
-  border-radius: 3px;
 }
 
 .stereoButtonContainer {

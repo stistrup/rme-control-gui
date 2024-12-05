@@ -15,6 +15,7 @@ export const babyfaceProConf: SoundcardConfig = {
         {
             inputIndex: 0,
             displayName: "Mic 1",
+            displayNameStereo: "Mic 1/2",
             controlName: "Mic-AN1",
             type: InputType.MIC,
             switchNames: {
@@ -39,6 +40,7 @@ export const babyfaceProConf: SoundcardConfig = {
         {
             inputIndex: 2,
             displayName: "Line 3",
+            displayNameStereo: "Line 3/4",
             controlName: "Line-IN3",
             type: InputType.LINE,
             switchNames: {

@@ -62,10 +62,16 @@ export const useRmeStore = defineStore("rme", () => {
   };
 
   // Get the stereo pair for a channel if it exists
-  const getStereoPair = () => (channelId: string) => {
-    return Object.values(stereoMappings.value).find(
-      mapping => mapping.left === channelId || mapping.right === channelId
-    );
+  const getStereoMappingFromLeftChannel = (channelId: string) => {
+    
+    const leftInput = inputs.value.find(input => input.controlName === channelId)
+
+    if (leftInput){
+      const rightInput = inputs.value.find(input => input.inputIndex === (leftInput.inputIndex + 1))
+      if (leftInput && rightInput) {
+        return {leftInput, rightInput}
+      }
+    }
   };
 
   // Filter inputs to only show unpaired channels and left channels of stereo pairs
@@ -126,7 +132,7 @@ export const useRmeStore = defineStore("rme", () => {
     stereoMappings,
     supportedProfiles,
     addStereoMapping,
-    getStereoPair,
+    getStereoMappingFromLeftChannel,
     getControlByName,
     removeStereoMapping,
     setActiveProfile,

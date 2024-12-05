@@ -12,14 +12,14 @@ const rmeStore = useRmeStore();
   <div :class="$style.mixer">
     <div :class="$style.channelInputs">
       <template v-for="channel in rmeStore.visibleChannels" :key="channel.controlName">
-        <ChannelInputStereo
+        <!-- <ChannelInputStereo
           v-if="rmeStore.stereoMappings[channel.controlName]"
           :leftChannelId="rmeStore.stereoMappings[channel.controlName].left"
           :rightChannelId="rmeStore.stereoMappings[channel.controlName].right"
-        />
+        /> -->
         <ChannelInput
-          v-else
-          :inputChannel="channel"
+          :leftInput="channel"
+          :rightInput="rmeStore.getStereoMappingFromLeftChannel(channel.controlName)?.rightInput"
         />
       </template>
     </div>
