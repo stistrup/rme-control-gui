@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useRmeStore } from "../stores/rmeStore";
 import ChannelInput from "./ChannelInput.vue";
-import ChannelInputStereo from "./ChannelInputStereo.vue";
 import MonitorControl from "./MonitorControl.vue";
 import PlaybackControl from "./PlaybackControl.vue";
 
