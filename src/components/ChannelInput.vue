@@ -144,10 +144,10 @@ const getPadState = async () => {
   return padState ?? null;
 };
 
-const handleStereoCouple = (e: any) => {
+const toggleStereoCouple = () => {
   if (!canBeStereoCoupled.value) return
-  rmeStore.addStereoMapping(props.leftInput.inputIndex)
-  console.error(props.leftInput.displayName)
+  console.error(props.leftInput.displayName, 'stereo coupling changed to', !props.leftInput.stereoCoupled)
+  rmeStore.setStereoCouple(props.leftInput.controlName, !props.leftInput.stereoCoupled)
 }
 
 onMounted(async () => {
@@ -245,7 +245,7 @@ onMounted(async () => {
           <button 
             v-if="canBeStereoCoupled"
             :class="$style.stereoButton"
-            @click="handleStereoCouple"
+            @click="toggleStereoCouple"
           >
           <img :class="$style.linkIcon" :src="linkIcon"/>
             <span>→</span>

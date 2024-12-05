@@ -14,12 +14,12 @@ const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore();
 
 const isEditing = ref(false);
-const editedDisplayName = ref(props.input.displayName);
+const editedDisplayName = ref(props.input.stereoCoupled ? props.input.displayNameStereo ?? "" : props.input.displayName);
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const startEditing = () => {
   isEditing.value = true;
-  editedDisplayName.value = props.input.displayName;
+  editedDisplayName.value = props.input.stereoCoupled ? props.input.displayNameStereo ?? "" : props.input.displayName;
   nextTick(() => {
     if (inputRef.value) {
       inputRef.value.focus();
@@ -53,7 +53,7 @@ const saveDisplayName = async () => {
 
 const cancelEditing = () => {
   isEditing.value = false;
-  editedDisplayName.value = props.input.displayName;
+  editedDisplayName.value = props.input.stereoCoupled ? props.input.displayNameStereo ?? "" : props.input.displayName;
 };
 
 </script>
@@ -61,7 +61,7 @@ const cancelEditing = () => {
 <template>
     <div :class="$style.labelContainer">
       <p v-if="!isEditing" :class="$style.label" @click="startEditing">
-        {{ input.displayName }}
+        {{ input.stereoCoupled ? props.input.displayNameStereo ?? "" : props.input.displayName }}
       </p>
       <input
         v-else
