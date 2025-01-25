@@ -2,9 +2,9 @@
 
 A graphical interface interfacing with ALSA and Pipewire to give easy control to RME soundcard Babyface Pro
 
-A fun little project to learn tauri and rust. Design will most likely look different later but i have some functionality i want to sort out first. 
+A fun little project to learn tauri and some rust. It's made to work on my mashine and my setup. The "buffer size" is just pipewires clock.force-quantum, and havn't yet tried if the app crashes without pipewire. Or how it handles running jack as main audio server etc. If you try it and can't get it to work, feel free to post issues and maybe i can fix it. 
 
-IMPORTANT: If you wanna try this out yourself, you need to apply [this patch](https://github.com/stistrup/rme-gain-kernel-patch). It has been submitted and accepted into the kernel but won't be available until 6.12
+IMPORTANT: You need a kernel version 6.12 or later as this app depends on some controls made available in that release. If you have an earlier kernel, you can manually apply [this patch](https://github.com/stistrup/rme-gain-kernel-patch) 
 
 ![image](https://github.com/user-attachments/assets/021db914-f0e2-406b-b667-162300d76f97)
 
