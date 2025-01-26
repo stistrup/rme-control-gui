@@ -13,6 +13,7 @@ IMPORTANT: On kernel versions earlier than 6.12, app is run in compatibility mod
 run "npm run tauri dev"
 
 # Building
+run "npm run build-tauri"
 
 I'm using Manjaro, and to build it for manjaro use "npm run build-tauri". That will create an appimage that you can run as is. There might be a couple of dependencies you'd have to fix, the compiler will tell you. And at least for me, there is a bug with tauri and nvidia card, so i'd have to run the appimage with "WEBKIT_DISABLE_DMABUF_RENDERER=1" set. If you are using any debian based distro, you can change target to "deb" in src-tauri/tauri.conf.json. 
 
