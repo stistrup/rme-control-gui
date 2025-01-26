@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
-import { AudioProfile, SoundcardConfig, TauriInputChannelConfig } from "../types/config.types";
+import { AudioProfile, TauriInputChannelConfig } from "../types/config.types";
 import { audioProfilesConfig, babyfaceProConf, babyfaceProConfCombatabilityMode } from "../config/soundCardConfig";
 
 

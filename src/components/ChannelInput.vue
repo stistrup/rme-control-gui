@@ -27,14 +27,15 @@ const volumeBoundaries = ref<{min: number, max: number} | null>(null);
 const canBeStereoCoupled = ref(true);
 
 const getOutputRoutingVolume = async (outputType: OutputType) => {
-  // TODO: Route to PCM in compatability mode
+
   const controlNames = formatRoutingControlName(
     props.leftInput.controlName, 
     outputType, 
-    rmeStore.soundCardConfig.outputs
+    rmeStore.soundCardConfig.outputs,
+    rmeStore.isCompatabilityMode
   )
+
   if(!controlNames) {
-    if (rmeStore.isCompatabilityMode && outputType === OutputType.SPEAKERS) return
     console.error('Could not format control names for output')
     return
   }
@@ -49,11 +50,16 @@ const getOutputRoutingVolume = async (outputType: OutputType) => {
 }
 
 const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
-  const controlNames = formatRoutingControlName(
-    props.leftInput.controlName, 
-    outputType,
-    rmeStore.soundCardConfig.outputs
-  )
+
+    const controlNames = formatRoutingControlName(
+      props.leftInput.controlName, 
+      outputType,
+      rmeStore.soundCardConfig.outputs,
+      rmeStore.isCompatabilityMode
+    )
+  
+
+
   if(!controlNames) return
 
   rmeService?.setAlsaVolumeStereo(controlNames.left, controlNames.right, newValue)
@@ -77,6 +83,7 @@ onMounted(async () => {
   if (levelsMain) routingVolumeMain.value = levelsMain
   if (levelsHp) routingVolumeHp.value = levelsHp
 });
+
 </script>
 
 <template>

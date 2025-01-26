@@ -2,8 +2,6 @@
 import { inject, onMounted } from "vue";
 import HomeView from "./views/HomeView.vue";
 import { RmeService } from "./services/RmeService.ts";
-import { babyfaceProConf, babyfaceProConfCombatabilityMode } from "./config/soundCardConfig.ts";
-import { OutputType } from "./types/config.types.ts";
 import { useRmeStore } from "./stores/rmeStore.ts";
 
 // Card must match name in aplay -l
