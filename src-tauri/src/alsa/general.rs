@@ -85,16 +85,21 @@ pub fn parse_value_from_amixer_output(output: &str) -> Result<i32, String> {
 
 pub fn find_babyface_card() -> Result<String, String> {
     let cards_path = "/proc/asound/cards";
+    // Get list of all ALSA sound devices
     let cards = fs::read_to_string(cards_path)
         .map_err(|e| format!("Failed to read cards: {}", e))?;
 
         println!("Searching for babyface card with vendor name 2a39:3fb0");
 
     for (i, line) in cards.lines().enumerate() {
+        // Only read first of the 2 lines
         if i % 2 == 0 {
+            // Get the index by reading the first white space separated text
             if let Some(card_index) = line.split_whitespace().next() {
+                // get the usb ID from that index
                 let usb_id_path = format!("/proc/asound/card{}/usbid", card_index);
                 if let Ok(usb_id) = fs::read_to_string(usb_id_path) {
+                    // Check if it matches with Rme Babyface Pro (class compliant)
                     if usb_id.trim() == "2a39:3fb0" {
                         // Extract the name in square brackets
                         if let Some(name) = line.split('[').nth(1).and_then(|s| s.split(']').next()) {

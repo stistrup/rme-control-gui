@@ -13,21 +13,6 @@ if (!rmeService) {
 }
 
 const initApp = async () => {
-
-  // const mainOutConf = babyfaceProConfCombatabilityMode.outputs.find(out => out.type === OutputType.HEADPHONES)
-
-  // if (!mainOutConf) {
-  //   console.error('No conf for main out !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-  //   return
-  // } 
-  
-  // const mainVolTest = await rmeService.getAlsaVolumeStereo(mainOutConf.controlNameLeft, mainOutConf.controlNameRight)
-  
-  // if (!mainVolTest) {
-  //   console.log('No support for main out volume. Using compatibility mode')
-  //   rmeStore.setActiveConfig(babyfaceProConfCombatabilityMode)
-  // }
-
   await rmeService.init();
 };
 
