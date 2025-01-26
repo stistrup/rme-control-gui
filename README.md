@@ -15,7 +15,7 @@ run "npm run tauri dev"
 # Building
 run "npm run build-tauri"
 
-I'm using Manjaro, and to build it for manjaro use "npm run build-tauri". That will create an appimage that you can run as is. There might be a couple of dependencies you'd have to fix, the compiler will tell you. And at least for me, there is a bug with tauri and nvidia card, so i'd have to run the appimage with "WEBKIT_DISABLE_DMABUF_RENDERER=1" set. If you are using any debian based distro, you can change target to "deb" in src-tauri/tauri.conf.json. 
+I'm using Manjaro and have only tested on that distro. That will create an appimage that you can run as is. There might be a couple of dependencies you'd have to fix, the compiler will tell you. And at least for me, there is a bug with tauri and nvidia proprietary drivers, so i'd have to run the appimage with "WEBKIT_DISABLE_DMABUF_RENDERER=1" set. If you are using any debian based distro, you should be able to just change target to "deb" in src-tauri/tauri.conf.json. 
 
 As i'm not really doing this to share it as a ready made package to install and run, i won't put much effort into making it a neat package ready to use on all distros etc, at least for now. Hopefully that will change in a near future. The tauri docs can probably answer most build related questions. 
 
