@@ -28,7 +28,7 @@ pub fn get_pad_state(card_index: &str, mic_name: &str) -> Result<bool, String> {
     let mut mic_found = false;
 
     for line in stdout.lines() {
-        if line.starts_with("Simple mixer control") && line.contains(mic_name) && line.contains("48V") {
+        if line.starts_with("Simple mixer control") && line.contains(mic_name) && line.contains("PAD") {
             mic_found = true;
             continue;
         }

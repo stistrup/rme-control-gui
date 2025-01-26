@@ -3,7 +3,7 @@ import { useRmeStore } from "../stores/rmeStore";
 import { formatControls } from "../utils/formatAlsaOutput";
 import { invoke } from "@tauri-apps/api/core";
 import { alsaToDB, dbToALSA } from "../utils/alsaValConversion";
-import { TauriInputChannelConfig } from "../types/config.types";
+import { InputType, TauriInputChannelConfig } from "../types/config.types";
 
 export class RmeService {
   private store: ReturnType<typeof useRmeStore>;
@@ -17,6 +17,16 @@ export class RmeService {
       const rawControls = (await invoke("get_soundcard_controls") as Record<string, string[]>)
       const formattedControls = formatControls(rawControls);
       this.store.setControls(formattedControls);
+
+      const micConf = this.store.soundCardConfig.inputs.find(input => input.type === InputType.MIC)
+      if (micConf?.switchNames.gain){
+
+        const supportsGain = this.store.alsaControls[micConf.switchNames.gain] ? true : false
+        if (!supportsGain) {
+          console.log('No support for input gain. Setting compatability mode')
+          this.store.setCompatabilityMode()
+        }
+      }
 
       const profiles = await this.getAllProfiles();
       if (profiles) {
@@ -278,7 +288,7 @@ export class RmeService {
 
       return true;
     } catch (error) {
-      console.error("Failed to set line sensitivity", error);
+      console.error("Failed to set line sensitivity:", error);
       throw error;
     }
   };
@@ -291,7 +301,7 @@ export class RmeService {
 
       return gain;
     } catch (error) {
-      console.error("Failed to set line sensitivity", error);
+      console.error("Failed to get input gain:", error);
       throw error;
     }
   }
@@ -305,7 +315,7 @@ export class RmeService {
 
       return result;
     } catch (error) {
-      console.error("Failed to set gain", error);
+      console.error("Failed to set gain:", error);
       throw error;
     }
   }
@@ -337,17 +347,17 @@ export class RmeService {
 
     const input = this.store.soundCardConfig.inputs[inputIndex]
 
-    if (!input.switchNames.phantom) {
+    if (!input.switchNames.pad) {
       console.error('This input does not support phantom. Cannot get')
       return
     }
 
     try {
-      const phantomState = (await invoke("get_pad_state", {
-        controlName: input.switchNames.phantom,
+      const padState = (await invoke("get_pad_state", {
+        controlName: input.switchNames.pad,
       })) as boolean;
-      console.log("Phantom state for", input.displayName, ':', phantomState);
-      return phantomState;
+      console.log("Phantom state for", input.displayName, ':', padState);
+      return padState;
     } catch (error) {
       console.error("Failed to get initial states:", error);
       throw error;

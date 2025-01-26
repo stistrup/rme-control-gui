@@ -10,11 +10,12 @@ const rmeStore = useRmeStore();
 <template>
   <div :class="$style.mixer">
     <div :class="$style.channelInputs">
-      <ChannelInput
-        v-for="channel in rmeStore.inputs"
-        :inputChannel="channel"
-        :key="channel.controlName"
-      />
+      <template v-for="channel in rmeStore.visibleChannels" :key="channel.controlName">
+        <ChannelInput
+          :leftInput="channel"
+          :rightInput="rmeStore.getRightChannelFromStereo(channel.controlName)"
+        />
+      </template>
     </div>
     <div :class="$style.playback">
       <PlaybackControl :playbackChannel="rmeStore.playback"/>

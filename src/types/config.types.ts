@@ -10,7 +10,9 @@ export enum InputType {
 
 export interface AlsaInput {
   displayName: string;
+  displayNameStereo?: string;
   controlName: string;
+  inputIndex: number;
   switchNames: AlsaInputSwitchNames
   type: InputType;
   stereoCoupled: boolean
@@ -34,7 +36,7 @@ export interface AlsaPlayback {
 export interface AlsaInputSwitchNames {
   phantom?: string;
   lineSens?: string;
-  gain: string;
+  gain?: string;
   pad?: string;
 }
 
