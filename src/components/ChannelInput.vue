@@ -24,7 +24,7 @@ const rmeStore = useRmeStore();
 const routingVolumeMain = ref({left: 0, right: 0});
 const routingVolumeHp = ref({left: 0, right: 0});
 const volumeBoundaries = ref<{min: number, max: number} | null>(null);
-const canBeStereoCoupled = ref(true);
+const canBeStereoCoupled = ref(props.leftInput.inputIndex % 2 === 0);
 
 const getOutputRoutingVolume = async (outputType: OutputType) => {
 
