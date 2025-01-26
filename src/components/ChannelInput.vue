@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import ChannelInputLabel from "./ChannelInputLabel.vue";
 import ChannelInputControls from "./ChannelInputControls.vue";
 import Fader from "./Fader.vue";
@@ -27,12 +27,17 @@ const volumeBoundaries = ref<{min: number, max: number} | null>(null);
 const canBeStereoCoupled = ref(true);
 
 const getOutputRoutingVolume = async (outputType: OutputType) => {
+  // TODO: Route to PCM in compatability mode
   const controlNames = formatRoutingControlName(
     props.leftInput.controlName, 
     outputType, 
     rmeStore.soundCardConfig.outputs
   )
-  if(!controlNames) return
+  if(!controlNames) {
+    if (rmeStore.isCompatabilityMode && outputType === OutputType.SPEAKERS) return
+    console.error('Could not format control names for output')
+    return
+  }
 
   const levels = await rmeService?.getAlsaVolumeStereo(
     controlNames.left,

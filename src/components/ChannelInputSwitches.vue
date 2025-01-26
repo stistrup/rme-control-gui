@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   phantomEnabled: boolean;
   padEnabled: boolean;
   lineSensValue: string | null;

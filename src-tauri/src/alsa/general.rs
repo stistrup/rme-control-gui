@@ -1,6 +1,7 @@
 use std::process::Command;
 use std::collections::HashMap;
 use regex::Regex;
+use std::fs;
 
 pub fn get_card_number_by_name(card_name: &str) -> Result<String, String> {
     let output = Command::new("aplay")
@@ -80,4 +81,31 @@ pub fn parse_value_from_amixer_output(output: &str) -> Result<i32, String> {
             Err("Could not parse volume from amixer output".to_string())
         }
     }
+}
+
+pub fn find_babyface_card() -> Result<String, String> {
+    let cards_path = "/proc/asound/cards";
+    let cards = fs::read_to_string(cards_path)
+        .map_err(|e| format!("Failed to read cards: {}", e))?;
+
+        println!("Searching for babyface card with vendor name 2a39:3fb0");
+
+    for (i, line) in cards.lines().enumerate() {
+        if i % 2 == 0 {
+            if let Some(card_index) = line.split_whitespace().next() {
+                let usb_id_path = format!("/proc/asound/card{}/usbid", card_index);
+                if let Ok(usb_id) = fs::read_to_string(usb_id_path) {
+                    if usb_id.trim() == "2a39:3fb0" {
+                        // Extract the name in square brackets
+                        if let Some(name) = line.split('[').nth(1).and_then(|s| s.split(']').next()) {
+                            println!("Found name: {}", name.trim());
+                            return Ok(name.trim().to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Err("No RME Babyface Pro found".to_string())
 }

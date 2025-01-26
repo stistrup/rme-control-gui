@@ -33,15 +33,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     .plugin(tauri_plugin_shell::init())
     .setup(|app| {
             let app_handle = app.handle(); // Get an immutable AppHandle
-            let app_state = AppState::new("Babyface Pro", "RME_Babyface_Pro", app_handle)?;
+            let app_state = AppState::new(&alsa::general::find_babyface_card()?, "RME_Babyface_Pro", app_handle)?;
             // #[cfg(debug_assertions)] // only include this code on debug builds
 
             app.manage(app_state);
 
             {
                 let window = app.get_webview_window("main").unwrap();
-                window.open_devtools();
-                window.close_devtools();
+                // window.open_devtools();
+                // window.close_devtools();
             }
             Ok(())
         })

@@ -1,17 +1,27 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { AudioControl, AudioControls } from "../types/alsaOutput.types";
-import { AlsaInput, AlsaOutput, AlsaPlayback, AudioProfile, TauriInputChannelConfig } from "../types/config.types";
-import { audioProfilesConfig, babyfaceProConf } from "../config/soundCardConfig";
+import { AudioProfile, SoundcardConfig, TauriInputChannelConfig } from "../types/config.types";
+import { audioProfilesConfig, babyfaceProConf, babyfaceProConfCombatabilityMode } from "../config/soundCardConfig";
+
+
 
 export const useRmeStore = defineStore("rme", () => {
   const soundCardConfig = ref(babyfaceProConf)
   const alsaControls = ref<AudioControls>({});
   const activeProfile = ref<null | AudioProfile>(null);
   const supportedProfiles = ref<string[]>([]);
-  const inputs = ref<AlsaInput[]>(babyfaceProConf.inputs);
-  const outputs = ref<AlsaOutput[]>(babyfaceProConf.outputs);
-  const playback = ref<AlsaPlayback>(babyfaceProConf.playback)
+  const isCompatabilityMode = ref(false)
+
+  const inputs = computed(() => {
+    return soundCardConfig.value.inputs
+  })
+  const outputs = computed(() => {
+    return soundCardConfig.value.outputs
+  })
+  const playback = computed(() => {
+    return soundCardConfig.value.playback
+  })
 
   const isInitialized = ref<boolean | null>(null);
 
@@ -86,6 +96,11 @@ export const useRmeStore = defineStore("rme", () => {
     supportedProfiles.value = profiles;
   };
 
+  const setCompatabilityMode = () => {
+    soundCardConfig.value = babyfaceProConfCombatabilityMode
+    isCompatabilityMode.value = true
+  }
+
   function updateControl(controlName: string, updatedControl: AudioControl) {
     if (alsaControls.value[controlName]) {
       alsaControls.value[controlName] = updatedControl;
@@ -96,6 +111,7 @@ export const useRmeStore = defineStore("rme", () => {
     activeProfile,
     alsaControls,
     inputs,
+    isCompatabilityMode,
     isInitialized,
     outputs,
     playback,
@@ -104,6 +120,7 @@ export const useRmeStore = defineStore("rme", () => {
     getRightChannelFromStereo,
     getControlByName,
     setActiveProfile,
+    setCompatabilityMode,
     setControls,
     setInputChannelConfig,
     setStereoCouple,

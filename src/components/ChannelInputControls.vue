@@ -25,7 +25,7 @@ const channelIndex = computed(() => {
 });
 
 const getInputGain = async () => {
-  if (channelIndex.value == null) return null
+  if (channelIndex.value == null || !props.input.switchNames.gain) return null
   let gain = await rmeService?.getInputGain(props.input.switchNames.gain)
 
   if (gain && props.input.type === InputType.LINE) gain = gain / 2
@@ -35,6 +35,7 @@ const getInputGain = async () => {
 
 const setInputGain = async (newValue: number) => {
   if (props.input.type === InputType.LINE) newValue = newValue * 2
+  if (!props.input.switchNames.gain) return
   rmeService?.setInputGain(props.input.switchNames.gain, newValue)
 }
 
@@ -99,14 +100,22 @@ const getPadState = async () => {
 onMounted(async () => {
   currentLineSens.value = await getLineSens();
   currentPhantomState.value = await getPhantomState();
-  inputGain.value = await getInputGain();
   currentPadState.value = await getPadState();
+  
+  if (rmeStore.isCompatabilityMode) return
 
-  let inputControls = rmeStore.getControlByName(props.input.switchNames.gain)
-  if (props.input.type === InputType.LINE) {
-    inputControls.limits.max = inputControls.limits.max / 2
+  inputGain.value = await getInputGain();
+
+  if (!props.input.switchNames.gain){
+    console.error("Gain switch name undefined despite not being in compatability mode")
+    return
   }
-  inputGainBoundaries.value = inputControls.limits;
+
+  let inputControlsGain = rmeStore.getControlByName(props.input.switchNames.gain)
+  if (props.input.type === InputType.LINE) {
+    inputControlsGain.limits.max = inputControlsGain.limits.max / 2
+  }
+  inputGainBoundaries.value = inputControlsGain.limits;
 });
 </script>
 

@@ -36,7 +36,7 @@ export interface AlsaPlayback {
 export interface AlsaInputSwitchNames {
   phantom?: string;
   lineSens?: string;
-  gain: string;
+  gain?: string;
   pad?: string;
 }
 

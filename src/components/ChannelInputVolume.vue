@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import Fader from './Fader.vue';
 import Knob from './Knob.vue';
-import { OutputType } from '../types/config.types';
 
-const props = defineProps<{
+defineProps<{
   mainVolume: number;
   headphoneVolume: number;
   volumeBoundaries: {
@@ -21,6 +20,7 @@ const emit = defineEmits<{
 <template>
     <div :class="$style.volumeControls">
       <Fader
+      v-if="mainVolume"
         :value="mainVolume"
         :min="volumeBoundaries.min"
         :max="volumeBoundaries.max"

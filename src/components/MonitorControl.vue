@@ -36,26 +36,41 @@ const setOutputVolume = (outputType: OutputType, volume: number) => {
   // rmeService.setMainOutVolume(volume)
 };
 
-onMounted(async () => {
-  const outputMonitor = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.SPEAKERS)
+const getHeadphoneStates = async () => {
   const outputHeadphones = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.HEADPHONES)
-  if (!outputMonitor || !outputHeadphones){
+  if (!outputHeadphones) {
+    console.error('Could not headphones in config')
+    return
+  }
+  const hp = await rmeService.getAlsaVolumeStereo(outputHeadphones.controlNameLeft, outputHeadphones.controlNameRight);
+  if (!hp) return
+  const hpAvarage = (hp.left + hp.right) / 2;
+
+  headphonesVolume.value = hpAvarage;
+}
+
+const getSpeakersStates = async () => {
+  const outputMonitor = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.SPEAKERS)
+
+  if (!outputMonitor){
     console.error('Could not find outputs in config')
     return
   }
 
   const monitor = await rmeService.getAlsaVolumeStereo(outputMonitor.controlNameLeft, outputMonitor.controlNameRight);
-  const hp = await rmeService.getAlsaVolumeStereo(outputHeadphones.controlNameLeft, outputHeadphones.controlNameRight);
 
-  if (!hp || !monitor) return;
 
-  const hpAvarage = (hp.left + hp.right) / 2;
+  if (!monitor) return;
+
 
   monitorVolumeLeft.value = monitor.left
   monitorVolumeRight.value = monitor.right
-  headphonesVolume.value = hpAvarage;
+}
 
-  console.log(monitorVolumeLeft.value, monitorVolumeRight.value)
+onMounted(async () => {
+  await getHeadphoneStates()
+  if (rmeStore.isCompatabilityMode) return
+  await getSpeakersStates()
 });
 </script>
 
@@ -64,7 +79,8 @@ onMounted(async () => {
     <p :class="$style.label">Monitor</p>
     <div :class="$style.controls">
       <div :class="$style.mainVolume">
-        <Fader 
+        <Fader
+        v-if="monitorVolumeLeft"
           :value="monitorVolumeLeft" 
           :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
           :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
