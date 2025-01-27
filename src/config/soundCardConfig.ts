@@ -79,10 +79,12 @@ export const babyfaceProConf: SoundcardConfig = {
             type: OutputType.HEADPHONES
         }
     ],
-    playback: {
+    playback: { // Control names are all outputs that should be affected by PCM playback
         displayName: "Playback",
-        controlNameLeft: "PCM-AN1-AN1",
-        controlNameRight: "PCM-AN2-AN2"
+        controlNameMonitorLeft: "PCM-AN1-AN1",
+        controlNameMonitorRight: "PCM-AN2-AN2",
+        controlNameHPLeft: "PCM-AN1-PH3",
+        controlNameHPRight: "PCM-AN2-PH4",
     },
     inputSwitchValues: {
         lineSensLow: "+4dBu",
@@ -165,10 +167,12 @@ export const babyfaceProConfCombatabilityMode: SoundcardConfig = {
             type: OutputType.HEADPHONES
         }
     ],
-    playback: {
+    playback: { // Control names are all outputs that should be affected by PCM playback
         displayName: "Playback",
-        controlNameLeft: "PCM-AN1-AN1",
-        controlNameRight: "PCM-AN2-AN2"
+        controlNameMonitorLeft: "PCM-AN1-AN1",
+        controlNameMonitorRight: "PCM-AN2-AN2",
+        controlNameHPLeft: "PCM-AN1-PH3",
+        controlNameHPRight: "PCM-AN2-PH4",
     },
     inputSwitchValues: {
         lineSensLow: "+4dBu",

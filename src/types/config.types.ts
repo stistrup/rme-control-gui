@@ -29,8 +29,10 @@ export interface AlsaOutput {
 
 export interface AlsaPlayback {
   displayName: string;
-  controlNameLeft: string;
-  controlNameRight: string;
+  controlNameMonitorLeft: string;
+  controlNameMonitorRight: string;
+  controlNameHPLeft: string;
+  controlNameHPRight: string;
 }
 
 export interface AlsaInputSwitchNames {

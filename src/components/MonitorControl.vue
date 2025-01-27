@@ -33,7 +33,6 @@ const setOutputVolume = (outputType: OutputType, volume: number) => {
   }
 
   rmeService.setAlsaVolumeStereo(output.controlNameLeft, output.controlNameRight, volume);
-  // rmeService.setMainOutVolume(volume)
 };
 
 const getHeadphoneStates = async () => {
@@ -80,7 +79,7 @@ onMounted(async () => {
     <div :class="$style.controls">
       <div :class="$style.mainVolume">
         <Fader
-        v-if="monitorVolumeLeft"
+          v-if="!rmeStore.isCompatabilityMode"
           :value="monitorVolumeLeft" 
           :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
           :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"

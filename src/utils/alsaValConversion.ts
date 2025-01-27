@@ -20,3 +20,8 @@ export function dbToALSA(dbValue: number): number {
   const alsaValue = Math.round(32768 * Math.pow(10, dbValue / 20));
   return Math.max(MIN_ALSA, Math.min(MAX_ALSA, alsaValue));
 }
+
+export const percentageToDb = (percentage: number): number => {
+  const db = (percentage / 100) * (MAX_DB - MIN_DB) + MIN_DB;
+  return Math.max(MIN_DB, Math.min(MAX_DB, Math.round(db * 2) / 2));
+}

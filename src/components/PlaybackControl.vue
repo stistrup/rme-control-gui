@@ -14,8 +14,11 @@ defineProps<MonitorControlProps>();
 
 const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore()
-const controlLeft = rmeStore.soundCardConfig.playback.controlNameLeft
-const controlRight = rmeStore.soundCardConfig.playback.controlNameRight
+const controlMonitorLeft = rmeStore.soundCardConfig.playback.controlNameMonitorLeft
+const controlMonitorRight = rmeStore.soundCardConfig.playback.controlNameMonitorRight
+const controlHPLeft = rmeStore.soundCardConfig.playback.controlNameHPLeft
+const controlHPRight = rmeStore.soundCardConfig.playback.controlNameHPRight
+
 
 if (!rmeService) {
   throw new Error("Could not inject RME service");
@@ -24,11 +27,12 @@ if (!rmeService) {
 const playbackVolume = ref(0);
 
 const setPlaybackVolume = (volume: number) => {
-  rmeService.setAlsaVolumeStereo(controlLeft, controlRight, volume);
+  rmeService.setAlsaVolumeStereo(controlMonitorLeft, controlMonitorRight, volume);
+  rmeService.setAlsaVolumeStereo(controlHPLeft, controlHPRight, volume);
 };
 
 onMounted(async () => {
-  const playback = await rmeService.getAlsaVolumeStereo(controlLeft, controlRight);
+  const playback = await rmeService.getAlsaVolumeStereo(controlMonitorLeft, controlMonitorRight);
 
   if (!playback) return;
 

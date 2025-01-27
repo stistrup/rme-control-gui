@@ -1,24 +1,46 @@
 <script setup lang="ts">
-import { inject, onMounted } from "vue";
+import { inject, onBeforeUnmount, onMounted } from "vue";
 import HomeView from "./views/HomeView.vue";
 import { RmeService } from "./services/RmeService.ts";
 import { useRmeStore } from "./stores/rmeStore.ts";
+import { MqttService } from "./services/MqttService.ts";
+import { percentageToDb } from "./utils/alsaValConversion.ts";
+import { OutputType } from "./types/config.types.ts";
 
-// Card must match name in aplay -l
 const rmeService = inject<RmeService>("RmeService");
+const mqttService = inject<MqttService>("MqttService");
 const rmeStore = useRmeStore();
 
-if (!rmeService) {
-  throw new Error("Could not import rme plugin");
+if (!rmeService || !mqttService) {
+  throw new Error("Could not import plugins");
 }
 
 const initApp = async () => {
   await rmeService.init();
+  await mqttService.init()
+
+
+  const hpConf = rmeStore.soundCardConfig.outputs.find(out => out.type === OutputType.HEADPHONES)
+
+  mqttService.on("volume", (volume) => {
+    if (hpConf) {
+      rmeService.setAlsaVolumeStereo(hpConf.controlNameLeft, hpConf.controlNameRight, percentageToDb(volume))
+    }
+  })
+
+  mqttService.on("phantom", (phantomState) => {
+    // index 0 === mic 1
+    rmeService.setPhantomPower(0, phantomState)
+  })
 };
 
 onMounted(async () => {
   await initApp();
 });
+
+onBeforeUnmount(() => {
+  console.log("shutdown")
+})
 </script>
 
 <template>
