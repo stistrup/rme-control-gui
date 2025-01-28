@@ -6,6 +6,7 @@ import { useRmeStore } from "./stores/rmeStore.ts";
 import { MqttService } from "./services/MqttService.ts";
 import { percentageToDb } from "./utils/alsaValConversion.ts";
 import { OutputType } from "./types/config.types.ts";
+import { BrokerConfig } from "./types/mqtt.types.ts";
 
 const rmeService = inject<RmeService>("RmeService");
 const mqttService = inject<MqttService>("MqttService");
@@ -17,8 +18,22 @@ if (!rmeService || !mqttService) {
 
 const initApp = async () => {
   await rmeService.init();
-  await mqttService.init()
 
+  let mqttConfig: BrokerConfig;
+
+  try {
+      // This is not included in release or in source code
+      // This is an extra feature for myself to control headphones and phantom power
+      // from a custom physical device
+      const mqttConfResponse = await fetch("mqttConf.json")
+      mqttConfig = await mqttConfResponse.json() as BrokerConfig
+
+      if (mqttConfig) {
+        await mqttService.init(mqttConfig.broker)
+      }
+  } catch (e) {
+      console.warn("Not MQTT config. MQTT feature disabled")
+  }
 
   const hpConf = rmeStore.soundCardConfig.outputs.find(out => out.type === OutputType.HEADPHONES)
 
