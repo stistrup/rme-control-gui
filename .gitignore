@@ -132,3 +132,5 @@ dist
 
 /src-tauri/target
 dev
+
+src/config/mqttConf.json

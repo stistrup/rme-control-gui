@@ -2,11 +2,26 @@ import mqtt from 'mqtt';
 import { EventEmitter } from 'events';
 import type { App } from 'vue';
 
+interface BrokerConfig{
+    broker: string
+}
+
+let mqttConfig: BrokerConfig | undefined;
+try {
+    // This is not included in release or in source code
+    // This is an extra feature for myself to control headphones and phantom power
+    // from a custom physical device
+    mqttConfig = await import('../config/mqttConf.json');
+} catch (e) {
+    console.warn("Not MQTT config. MQTT feature disabled")
+}
+
 export class MqttService extends EventEmitter {
     private client: mqtt.MqttClient | null = null;
-    private readonly broker: string = '';
+    private readonly broker: string | undefined = mqttConfig?.broker;
 
     public async init(): Promise<void> {
+        if (!this.broker) return;
         this.client = mqtt.connect(this.broker);
         
         this.client.on('connect', () => {
