@@ -4,9 +4,16 @@ A graphical interface interfacing with ALSA and Pipewire to give easy control to
 
 A fun little project to learn tauri and some rust. It's made to work on my mashine and my setup. The "buffer size" is just pipewires clock.force-quantum, and havn't yet tried if the app crashes without pipewire. Or how it handles running jack as main audio server etc. If you try it and can't get it to work, feel free to post issues and maybe i can fix it. 
 
-IMPORTANT: On kernel versions earlier than 6.12, app is run in compatibility mode, where there are no input gain controls, and no main out volume. Those are instead replaced by PCM routing, which gets the job done, but is not actually the same as changing monitor or headphones volume on the physical device. If you have an earlier kernel, you can manually apply [this kernel patch](https://github.com/stistrup/rme-gain-kernel-patch) (same one that is available in 6.12 and up) if you want full functionality.
-
 ![image](https://github.com/user-attachments/assets/021db914-f0e2-406b-b667-162300d76f97)
+
+## Features
+- Monitor controls (headphones and main out)
+- Switches (PAD, 48v, input sensetivity)
+- Input gain controls (on kernel 6.12+)
+- Main output volume controls (on kernel 6.12+)
+- Buffer size and audio profile control (through Pipewire)
+
+IMPORTANT: On kernel versions earlier than 6.12, app is run in compatibility mode, where there are no input gain controls, and no main out volume. Those are instead replaced by PCM routing, which gets the job done, but is not actually the same as changing monitor or headphones volume on the physical device. If you have an earlier kernel, you can manually apply [this kernel patch](https://github.com/stistrup/rme-gain-kernel-patch) (same one that is available in 6.12 and up) if you want full functionality.
 
 # Development
 
