@@ -27,21 +27,29 @@ const startEditing = () => {
   });
 };
 
-const saveDisplayName = async () => {
+const saveChannelconfig = async () => {
   if (!rmeService) return;
-  
+
   try {
+
+    const displayName = props.input.stereoCoupled ? props.input.displayName : editedDisplayName.value
+    const displayNameStereo = props.input.stereoCoupled ? editedDisplayName.value : props.input.displayNameStereo
 
     await rmeService.setInputChannelConfig(
       props.input.controlName,
-      editedDisplayName.value,
+      displayName,
+      displayNameStereo ?? "",
       props.input.stereoCoupled
     );
     
     // Update the store
     const index = rmeStore.inputs.findIndex(input => input.controlName === props.input.controlName);
     if (index !== -1) {
-      rmeStore.inputs[index].displayName = editedDisplayName.value;
+      if (props.input.stereoCoupled) {
+        rmeStore.inputs[index].displayNameStereo = editedDisplayName.value;
+      } else {
+        rmeStore.inputs[index].displayName = editedDisplayName.value;
+      }
     }
     
     console.log("Updated displayname for", props.input.controlName, 'to', editedDisplayName.value)
@@ -68,9 +76,9 @@ const cancelEditing = () => {
         ref="inputRef"
         v-model="editedDisplayName"
         :class="$style.labelInput"
-        @keyup.enter="saveDisplayName"
+        @keyup.enter="saveChannelconfig"
         @keyup.esc="cancelEditing"
-        @blur="saveDisplayName"
+        @blur="saveChannelconfig"
       />
     </div>
 </template>

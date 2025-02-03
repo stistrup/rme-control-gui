@@ -6,6 +6,7 @@ pub fn save_channel_config(
     app_handle: AppHandle,
     control_name: String,
     display_name: String,
+    display_name_stereo: String,
     stereo_coupled: bool,
 ) -> Result<(), String> {
     let storage = ConfigStorage::new(&app_handle).map_err(|e| e.to_string())?;
@@ -14,6 +15,7 @@ pub fn save_channel_config(
     config.channels.insert(control_name.clone(), InputChannelConfig {
         control_name,
         display_name,
+        display_name_stereo,
         stereo_coupled,
     });
 

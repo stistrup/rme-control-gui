@@ -9,6 +9,8 @@ use tauri::Manager;
 pub struct InputChannelConfig {
     pub control_name: String,
     pub display_name: String,
+    #[serde(default)]
+    pub display_name_stereo: String,
     pub stereo_coupled: bool,
 }
 

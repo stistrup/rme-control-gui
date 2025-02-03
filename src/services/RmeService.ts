@@ -49,7 +49,7 @@ export class RmeService {
         const inputHasConfig = inputChannelsConfig.some(config => config.control_name === input.controlName)
         if (!inputHasConfig) {
           console.log('No input channel config found for', input.displayName, '. Setting default from soundCardConfig.ts')
-          this.setInputChannelConfig(input.controlName, input.displayName, input.stereoCoupled)
+          this.setInputChannelConfig(input.controlName, input.displayName, input.displayNameStereo ?? "", input.stereoCoupled)
         }
       })
 
@@ -210,11 +210,12 @@ export class RmeService {
     }
   }
 
-  public setInputChannelConfig = async (controlName: string, displayName: string, stereoCoupled: boolean) => {
+  public setInputChannelConfig = async (controlName: string, displayName: string, displayNameStereo: string, stereoCoupled: boolean) => {
     try {
       const result = (await invoke("save_channel_config", {
         controlName,
         displayName,
+        displayNameStereo,
         stereoCoupled
       }) as number);
 
