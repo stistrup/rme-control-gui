@@ -1,6 +1,7 @@
 import mqtt from 'mqtt';
 import { EventEmitter } from 'events';
 import type { App } from 'vue';
+import { removeExponentialCurve } from '../utils/expConvertion';
 
 export class MqttService extends EventEmitter {
     private client: mqtt.MqttClient | null = null;
@@ -25,7 +26,8 @@ export class MqttService extends EventEmitter {
                 if (topic === 'control_panel/out') {
                     if (payload.command === 'hp_volume') {
                         const percentage = (payload.potVal / 1024) * 100;
-                        this.emit('volume', percentage);
+                        const expPercentage = removeExponentialCurve(percentage, 0, 100, 2.5)
+                        this.emit('volume', expPercentage);
                     }
                     if (payload.command === 'phantom') {
                         const state = payload.state === 1 ? true : false

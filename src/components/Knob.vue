@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watchEffect } from "vue";
+import { applyExponentialCurve, removeExponentialCurve } from "../utils/expConvertion";
 
 interface KnobProps {
   min: number;
@@ -9,12 +10,18 @@ interface KnobProps {
   step?: number
   label?: string;
   icon?: string;
+  exponentCurve?: number;
 }
 
 const props = withDefaults(defineProps<KnobProps>(), {
   size: 80,
-  step: 1
+  step: 1,
+  exponentCurve: 1 // 1 is linear
 });
+
+if (props.exponentCurve < 1) {
+  throw new Error("Cannot set exponent to lower than 1")
+}
 
 const emit = defineEmits(["newValue"]);
 
@@ -24,9 +31,12 @@ const startY = ref(0);
 const startValue = ref(0);
 
 const rotation = computed(() => {
-  const range = props.max - props.min;
-  const percentage = (localValue.value - props.min) / range;
-  return percentage * 270 - 135; // -135 to 135 degrees
+    // Convert the current value to exponential space for visual rotation
+    const exponentialValue = applyExponentialCurve(localValue.value, props.min, props.max, props.exponentCurve);
+    const range = props.max - props.min;
+    const percentage = (exponentialValue - props.min) / range;
+    return percentage * 270 - 135; // -135 to 135 degrees
+
 });
 
 const referenceLines = computed(() => {
@@ -75,14 +85,23 @@ function drag(event: MouseEvent) {
   const currentY = event.clientY;
   const deltaY = startY.value - currentY;
   const range = props.max - props.min;
-  const sensitivity = 300; // Adjust this value to change the sensitivity
+  const sensitivity = 300;
 
-  let newValue = startValue.value + (deltaY / sensitivity) * range;
-  newValue = Math.max(props.min, Math.min(props.max, newValue));
+
+  // Convert the start value to its exponential position
+  const exponentialStartValue = applyExponentialCurve(startValue.value, props.min, props.max, props.exponentCurve);
+  
+  // Apply the movement to the exponential position
+  let exponentialNewValue = exponentialStartValue + (deltaY / sensitivity) * range;
+  exponentialNewValue = Math.max(props.min, Math.min(props.max, exponentialNewValue));
+  
+  // Convert back to the actual value space
+  let newValue = removeExponentialCurve(exponentialNewValue, props.min, props.max, props.exponentCurve);
   newValue = Math.round(newValue / props.step) * props.step;
 
   localValue.value = newValue;
   emit("newValue", newValue);
+  
 }
 
 function stopDrag() {

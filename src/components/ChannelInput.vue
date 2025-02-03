@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref } from "vue";
 import ChannelInputLabel from "./ChannelInputLabel.vue";
 import ChannelInputControls from "./ChannelInputControls.vue";
 import Fader from "./Fader.vue";
@@ -21,8 +21,10 @@ const props = defineProps<ChannelProps>();
 const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore();
 
-const routingVolumeMain = ref({left: 0, right: 0});
-const routingVolumeHp = ref({left: 0, right: 0});
+const volumes = computed(() =>{
+  return rmeStore.channelVolumes[props.leftInput.controlName]
+})
+
 const volumeBoundaries = ref<{min: number, max: number} | null>(null);
 const canBeStereoCoupled = ref(props.leftInput.inputIndex % 2 === 0);
 
@@ -58,8 +60,6 @@ const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
       rmeStore.isCompatabilityMode
     )
   
-
-
   if(!controlNames) return
 
   rmeService?.setAlsaVolumeStereo(controlNames.left, controlNames.right, newValue)
@@ -67,7 +67,7 @@ const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
 
 const toggleStereoCouple = () => {
   if (!canBeStereoCoupled.value) return
-  console.error(props.leftInput.displayName, 'stereo coupling changed to', !props.leftInput.stereoCoupled)
+  console.debug(props.leftInput.displayName, 'stereo coupling changed to', !props.leftInput.stereoCoupled)
   rmeStore.setStereoCouple(props.leftInput.controlName, !props.leftInput.stereoCoupled)
 }
 
@@ -80,8 +80,8 @@ onMounted(async () => {
   const levelsMain = await getOutputRoutingVolume(OutputType.SPEAKERS);
   const levelsHp = await getOutputRoutingVolume(OutputType.HEADPHONES);
 
-  if (levelsMain) routingVolumeMain.value = levelsMain
-  if (levelsHp) routingVolumeHp.value = levelsHp
+  if (levelsMain) rmeStore.setChannelMonitorSend(props.leftInput.controlName, levelsMain.left, levelsMain.right)
+  if (levelsHp) rmeStore.setChannelHpSend(props.leftInput.controlName, levelsHp.left, levelsHp.right)
 });
 
 </script>
@@ -102,8 +102,8 @@ onMounted(async () => {
       </div>
       
       <Fader
-        v-if="volumeBoundaries"
-        :value="(routingVolumeMain.left + routingVolumeMain.right) / 2"
+        v-if="volumes && volumeBoundaries"
+        :value="(volumes.monitorSendDb.left + volumes.monitorSendDb.right) / 2"
         :min="volumeBoundaries.min"
         :max="volumeBoundaries.max"
         :step="1"
@@ -113,12 +113,13 @@ onMounted(async () => {
       <div :class="$style.rightControls">
         <ChannelInputControls :input="leftInput" />
         <Knob
-          v-if="volumeBoundaries"
-          :value="(routingVolumeHp.left + routingVolumeHp.right) / 2"
+          v-if="volumes && volumeBoundaries"
+          :value="(volumes.hpSendDb.left + volumes.hpSendDb.right) / 2"
           :min="volumeBoundaries.min"
           :max="volumeBoundaries.max"
           :size="60"
           icon="headphones.png"
+          :exponent-curve="2.5"
           @newValue="value => setOutputRoutingVolume(OutputType.HEADPHONES, value)"
         />
       </div>

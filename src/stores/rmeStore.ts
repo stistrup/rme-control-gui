@@ -4,7 +4,20 @@ import { AudioControl, AudioControls } from "../types/alsaOutput.types";
 import { AudioProfile, TauriInputChannelConfig } from "../types/config.types";
 import { audioProfilesConfig, babyfaceProConf, babyfaceProConfCombatabilityMode } from "../config/soundCardConfig";
 
+interface ChannelVolume {
+  [channelId: string]: {
+    monitorSendDb: {left: number, right: number},
+    hpSendDb: {left: number, right: number},
+    gainDb?: number
+  }
+}
 
+interface MainVolume {
+  [channelId: string]: {
+    left: number,
+    right: number
+  }
+}
 
 export const useRmeStore = defineStore("rme", () => {
   const soundCardConfig = ref(babyfaceProConf)
@@ -12,6 +25,8 @@ export const useRmeStore = defineStore("rme", () => {
   const activeProfile = ref<null | AudioProfile>(null);
   const supportedProfiles = ref<string[]>([]);
   const isCompatabilityMode = ref(false)
+  const channelVolumes = ref<ChannelVolume>({})
+  const mainVolumes = ref<MainVolume>({})
 
   const inputs = computed(() => {
     return soundCardConfig.value.inputs
@@ -24,6 +39,49 @@ export const useRmeStore = defineStore("rme", () => {
   })
 
   const isInitialized = ref<boolean | null>(null);
+
+  const setChannelMonitorSend = (channelId: string, leftValue: number, rightValue: number) => {
+    if (!channelVolumes.value[channelId]) {
+      channelVolumes.value[channelId] = {
+        monitorSendDb: {left: 0, right: 0},
+        hpSendDb: {left: 0, right: 0}
+      }
+    }
+    channelVolumes.value[channelId].monitorSendDb = {
+      left: leftValue,
+      right: rightValue
+    }
+  }
+
+  const setChannelHpSend = (channelId: string, leftValue: number, rightValue: number) => {
+    if (!channelVolumes.value[channelId]) {
+      channelVolumes.value[channelId] = {
+        monitorSendDb: {left: 0, right: 0},
+        hpSendDb: {left: 0, right: 0}
+      }
+    }
+    channelVolumes.value[channelId].hpSendDb = {
+      left: leftValue,
+      right: rightValue
+    }
+  }
+
+  const setChannelGain = (channelId: string, value: number) => {
+    if (!channelVolumes.value[channelId]) {
+      channelVolumes.value[channelId] = {
+        monitorSendDb: {left: 0, right: 0},
+        hpSendDb: {left: 0, right: 0}
+      }
+    }
+    channelVolumes.value[channelId].gainDb = value
+  }
+
+  const setMainVolume = (channelId: string, leftValue: number, rightValue: number) => {
+    mainVolumes.value[channelId] = {
+      left: leftValue,
+      right: rightValue
+    }
+  }
 
   // Get the stereo pair for a channel if it exists
   const getRightChannelFromStereo = (leftChannelId: string) => {
@@ -110,22 +168,28 @@ export const useRmeStore = defineStore("rme", () => {
   return {
     activeProfile,
     alsaControls,
+    channelVolumes,
     inputs,
     isCompatabilityMode,
     isInitialized,
+    mainVolumes,
     outputs,
     playback,
     soundCardConfig,
     supportedProfiles,
-    getRightChannelFromStereo,
+    visibleChannels,
     getControlByName,
+    getRightChannelFromStereo,
     setActiveProfile,
+    setChannelGain,
+    setChannelHpSend,
+    setChannelMonitorSend,
     setCompatabilityMode,
     setControls,
     setInputChannelConfig,
+    setMainVolume,
     setStereoCouple,
     setSupportedProfiles,
     updateControl,
-    visibleChannels,
   };
 });

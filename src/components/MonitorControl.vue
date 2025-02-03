@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted, ref } from "vue";
+import { computed, inject, onMounted } from "vue";
 import Knob from "./Knob.vue";
 import Fader from "./Fader.vue"
 import { RmeService } from "../services/RmeService";
@@ -11,7 +11,7 @@ interface MonitorControlProps {
   outputs: AlsaOutput[];
 }
 
-defineProps<MonitorControlProps>();
+const props = defineProps<MonitorControlProps>();
 
 const rmeService = inject<RmeService>("RmeService");
 const rmeStore = useRmeStore()
@@ -20,9 +20,23 @@ if (!rmeService) {
   throw new Error("Could not inject RME service");
 }
 
-const monitorVolumeLeft = ref(0);
-const monitorVolumeRight = ref(0);
-const headphonesVolume = ref(0);
+const monitorConf = computed(() => {
+  return props.outputs.find(out => out.type === OutputType.SPEAKERS)
+})
+
+const hpConf = computed(() => {
+  return props.outputs.find(out => out.type === OutputType.HEADPHONES)
+})
+
+const monitorVolume = computed(() => {
+  if (!monitorConf.value) return
+  return rmeStore.mainVolumes[monitorConf.value.controlNameLeft]
+})
+
+const hpVolume = computed(() => {
+  if (!hpConf.value) return
+  return rmeStore.mainVolumes[hpConf.value.controlNameLeft]
+})
 
 const setOutputVolume = (outputType: OutputType, volume: number) => {
   const output = rmeStore.soundCardConfig.outputs.find(output => output.type === outputType)
@@ -36,34 +50,30 @@ const setOutputVolume = (outputType: OutputType, volume: number) => {
 };
 
 const getHeadphoneStates = async () => {
-  const outputHeadphones = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.HEADPHONES)
-  if (!outputHeadphones) {
+  if (!hpConf.value) {
     console.error('Could not headphones in config')
     return
   }
-  const hp = await rmeService.getAlsaVolumeStereo(outputHeadphones.controlNameLeft, outputHeadphones.controlNameRight);
-  if (!hp) return
-  const hpAvarage = (hp.left + hp.right) / 2;
 
-  headphonesVolume.value = hpAvarage;
+  const hp = await rmeService.getAlsaVolumeStereo(hpConf.value.controlNameLeft, hpConf.value.controlNameRight);
+  if (!hp) return
+
+  rmeStore.setMainVolume(hpConf.value?.controlNameLeft, hp.left, hp.right)
 }
 
 const getSpeakersStates = async () => {
-  const outputMonitor = rmeStore.soundCardConfig.outputs.find(output => output.type === OutputType.SPEAKERS)
-
-  if (!outputMonitor){
+  if (!monitorConf.value){
     console.error('Could not find outputs in config')
     return
   }
 
-  const monitor = await rmeService.getAlsaVolumeStereo(outputMonitor.controlNameLeft, outputMonitor.controlNameRight);
+  const monitor = await rmeService.getAlsaVolumeStereo(monitorConf.value.controlNameLeft, monitorConf.value.controlNameRight);
 
 
   if (!monitor) return;
 
 
-  monitorVolumeLeft.value = monitor.left
-  monitorVolumeRight.value = monitor.right
+  rmeStore.setMainVolume(monitorConf.value.controlNameLeft, monitor.left, monitor.right)
 }
 
 onMounted(async () => {
@@ -79,21 +89,23 @@ onMounted(async () => {
     <div :class="$style.controls">
       <div :class="$style.mainVolume">
         <Fader
-          v-if="!rmeStore.isCompatabilityMode"
-          :value="monitorVolumeLeft" 
+          v-if="!rmeStore.isCompatabilityMode && monitorVolume"
+          :value="monitorVolume.left" 
           :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
           :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
           :stereo="true"
-          :value-right="monitorVolumeRight"
+          :value-right="monitorVolume.right"
           @new-value="value => setOutputVolume(OutputType.SPEAKERS, value)"
         />
       </div>
       <Knob
+      v-if="hpVolume"
         icon="headphones.png"
-        :value="headphonesVolume"
+        :value="(hpVolume.left + hpVolume.right) / 2"
         :min="alsaToDB(rmeStore.soundCardConfig.inputRange.min)"
         :max="alsaToDB(rmeStore.soundCardConfig.inputRange.max)"
         :size="80"
+        :exponent-curve="2.5"
         @new-value="value => setOutputVolume(OutputType.HEADPHONES, value)"
       />
     </div>

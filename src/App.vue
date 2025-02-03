@@ -39,7 +39,9 @@ const initApp = async () => {
 
   mqttService.on("volume", (volume) => {
     if (hpConf) {
-      rmeService.setAlsaVolumeStereo(hpConf.controlNameLeft, hpConf.controlNameRight, percentageToDb(volume))
+      const dbValue = percentageToDb(volume)
+      rmeService.setAlsaVolumeStereo(hpConf.controlNameLeft, hpConf.controlNameRight, dbValue)
+      rmeStore.setMainVolume(hpConf.controlNameLeft, dbValue, dbValue)
     }
   })
 

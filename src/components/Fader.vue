@@ -17,6 +17,7 @@ const localValue = ref(props.value);
 const isDragging = ref(false);
 const startY = ref(0);
 const startValue = ref(0);
+const exponent = 2.5
 
 const faderPosition = computed(() => {
   const range = props.max - props.min;
@@ -30,7 +31,7 @@ const zeroPosition = computed(() => {
   }
   
   const zeroLinear = (0 - props.min) / (props.max - props.min);
-  const zeroCurved = applyExponentialCurve(zeroLinear, 0, 1);
+  const zeroCurved = applyExponentialCurve(zeroLinear, 0, 1, exponent);
   return (1 - zeroCurved) * 100;
 });
 
@@ -55,13 +56,13 @@ function drag(event: MouseEvent) {
   let newLinearValue = startValue.value - (deltaY / faderHeight) * range;
   newLinearValue = Math.max(props.min, Math.min(props.max, newLinearValue));
 
-  let restoredScale = removeExponentialCurve(newLinearValue, props.min, props.max);
+  let restoredScale = removeExponentialCurve(newLinearValue, props.min, props.max, exponent);
   restoredScale = Math.round(restoredScale * 2) / 2; // Round to nearest 0.5
 
   const snapThreshold = 1; // 1 dB
 
   if (restoredScale < snapThreshold && restoredScale > -snapThreshold) {
-    newLinearValue = applyExponentialCurve(0, props.min, props.max)
+    newLinearValue = applyExponentialCurve(0, props.min, props.max, exponent)
   }
 
   localValue.value = newLinearValue;
@@ -75,7 +76,7 @@ function stopDrag() {
 }
 
 onMounted(() => {
-  localValue.value = applyExponentialCurve(props.value, props.min, props.max);
+  localValue.value = applyExponentialCurve(props.value, props.min, props.max, exponent);
 });
 
 onUnmounted(() => {
@@ -85,11 +86,11 @@ onUnmounted(() => {
 
 // Watch for changes in the prop value
 watch(() => props.value, (newValue) => {
-  localValue.value = applyExponentialCurve(newValue, props.min, props.max);
+  localValue.value = applyExponentialCurve(newValue, props.min, props.max, exponent);
 });
 
 const displayValue = computed(() => {
-  return Math.round(removeExponentialCurve(localValue.value, props.min, props.max));
+  return Math.round(removeExponentialCurve(localValue.value, props.min, props.max, exponent));
 });
 </script>
 
