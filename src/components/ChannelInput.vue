@@ -67,8 +67,11 @@ const setOutputRoutingVolume = (outputType: OutputType, newValue: number) => {
 
 const toggleStereoCouple = () => {
   if (!canBeStereoCoupled.value) return
-  console.debug(props.leftInput.displayName, 'stereo coupling changed to', !props.leftInput.stereoCoupled)
-  rmeStore.setStereoCouple(props.leftInput.controlName, !props.leftInput.stereoCoupled)
+  const newState = !props.leftInput.stereoCoupled
+
+  console.debug(props.leftInput.displayName, 'stereo coupling changed to', newState)
+  rmeStore.setStereoCouple(props.leftInput.controlName, newState)
+  rmeService?.setInputChannelConfig(props.leftInput.controlName, props.leftInput.displayName, props.leftInput.displayNameStereo ?? "", newState)
 }
 
 onMounted(async () => {
