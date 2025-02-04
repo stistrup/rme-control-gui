@@ -39,12 +39,12 @@ const setInputGain = async (newValue: number) => {
   rmeService?.setInputGain(props.input.switchNames.gain, newValue)
 }
 
-  // FIXME:
-  // This is the dumbest fix. When setting gain. Somehow headphones volume also gets set to around -10 db.
-  // (Regardless if gain is set directly in alsamixer or through gui. Issue persist outside this app)
-  // On top of that, if i instantly just set the headphones to what it was just before, it doesn't always stick.
-  // But setting it first to 1 db under it's actual value, followed by the actual value it works..
-  // However, very notisable "stuttering" in the headphones
+// FIXME:
+// This is the dumbest fix. When setting gain. Somehow headphones volume also gets set to around -10 db.
+// (Regardless if gain is set directly in alsamixer or through gui. Issue persist outside this app)
+// On top of that, if i instantly just set the headphones to what it was just before, it doesn't always stick.
+// But setting it first to 1 db under it's actual value, followed by the actual value it works..
+// However, very notisable "stuttering" in the headphones
 const resetHeadphones = () => {
   const hpOutput = rmeStore.outputs.find(out => out.type === OutputType.HEADPHONES)
   if (!hpOutput) return
