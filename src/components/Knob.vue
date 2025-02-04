@@ -23,7 +23,7 @@ if (props.exponentCurve < 1) {
   throw new Error("Cannot set exponent to lower than 1")
 }
 
-const emit = defineEmits(["newValue"]);
+const emit = defineEmits(["newValue", "knobReleased"]);
 
 const localValue = ref(props.value);
 const isDragging = ref(false);
@@ -108,6 +108,7 @@ function stopDrag() {
   isDragging.value = false;
   window.removeEventListener("mousemove", drag);
   window.removeEventListener("mouseup", stopDrag);
+  emit("knobReleased")
 }
 
 watchEffect(() => {

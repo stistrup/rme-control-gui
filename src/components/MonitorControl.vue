@@ -47,6 +47,7 @@ const setOutputVolume = (outputType: OutputType, volume: number) => {
   }
 
   rmeService.setAlsaVolumeStereo(output.controlNameLeft, output.controlNameRight, volume);
+  rmeStore.setMainVolume(output.controlNameLeft, volume, volume)
 };
 
 const getHeadphoneStates = async () => {

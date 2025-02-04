@@ -4,7 +4,7 @@ import ChannelInputSwitches from './ChannelInputSwitches.vue';
 import Knob from './Knob.vue';
 import { RmeService } from "../services/RmeService";
 import { useRmeStore } from "../stores/rmeStore";
-import { AlsaInput, InputType } from "../types/config.types";
+import { AlsaInput, InputType, OutputType } from "../types/config.types";
 
 const props = defineProps<{
   input: AlsaInput;
@@ -37,6 +37,22 @@ const setInputGain = async (newValue: number) => {
   if (props.input.type === InputType.LINE) newValue = newValue * 2
   if (!props.input.switchNames.gain) return
   rmeService?.setInputGain(props.input.switchNames.gain, newValue)
+}
+
+  // FIXME:
+  // This is the dumbest fix. When setting gain. Somehow headphones volume also gets set to around -10 db.
+  // (Regardless if gain is set directly in alsamixer or through gui. Issue persist outside this app)
+  // On top of that, if i instantly just set the headphones to what it was just before, it doesn't always stick.
+  // But setting it first to 1 db under it's actual value, followed by the actual value it works..
+  // However, very notisable "stuttering" in the headphones
+const resetHeadphones = () => {
+  const hpOutput = rmeStore.outputs.find(out => out.type === OutputType.HEADPHONES)
+  if (!hpOutput) return
+  const hpVolume = rmeStore.mainVolumes[hpOutput.controlNameLeft]
+  if (!hpVolume) return
+  const dumbestFixEver = hpVolume.left - 1
+  rmeService?.setAlsaVolumeStereo(hpOutput.controlNameLeft, hpOutput.controlNameRight, dumbestFixEver)
+  rmeService?.setAlsaVolumeStereo(hpOutput.controlNameLeft, hpOutput.controlNameRight, hpVolume.left)
 }
 
 const setPhantomState = async () => {
@@ -144,6 +160,7 @@ onMounted(async () => {
       :size="60"
       :step="props.input.type === InputType.LINE ? 0.5 : 1"
       @newValue="setInputGain"
+      @knob-released="resetHeadphones"
     />
   </div>
 </template>
