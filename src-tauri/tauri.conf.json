@@ -1,6 +1,6 @@
 {
   "productName": "rme-babyface-control",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "identifier": "steffes.mega.rme.app",
   "build": {
     "beforeDevCommand": "npm run dev",

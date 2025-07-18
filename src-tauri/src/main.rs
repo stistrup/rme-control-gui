@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             app.manage(app_state);
 
             {
-                let window = app.get_webview_window("main").unwrap();
+                // let window = app.get_webview_window("main").unwrap();
                 // window.open_devtools();
                 // window.close_devtools();
             }
