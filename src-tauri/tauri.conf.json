@@ -8,6 +8,11 @@
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  },
   "app": {
     "windows": [
       {
