@@ -75,6 +75,22 @@ function stopDrag() {
   window.removeEventListener("mouseup", stopDrag);
 }
 
+function scrollWheel(event: WheelEvent) {
+  // Ignore horizontal scrolling
+  if (event.deltaX !== 0) return;
+
+  // Prevent document scrolling
+  event.preventDefault();
+
+  let restoredValue = removeExponentialCurve(localValue.value, props.min, props.max, exponent);
+
+  restoredValue += event.deltaY < 0 ? 1 : -1; // 1 dB step
+  restoredValue = Math.max(props.min, Math.min(props.max, restoredValue));
+
+  localValue.value = applyExponentialCurve(restoredValue, props.min, props.max, exponent);
+  emit("newValue", restoredValue);
+}
+
 onMounted(() => {
   localValue.value = applyExponentialCurve(props.value, props.min, props.max, exponent);
 });
@@ -97,7 +113,7 @@ const displayValue = computed(() => {
 <template>
   
   <div :class="$style.control">
-    <div :class="$style.faderContainer">
+    <div :class="$style.faderContainer" @wheel="scrollWheel">
         <div :class="$style.faderTrack">
           <div
             :class="$style.zeroLine"
