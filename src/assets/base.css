@@ -1,4 +1,10 @@
-.hmtl,
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
+  margin: 0;
+  padding: 0;
   font-family: "Roboto", "Segoe UI", "Arial", sans-serif;
 }
