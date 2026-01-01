@@ -99,8 +99,7 @@ function drag(event: MouseEvent) {
   let newValue = removeExponentialCurve(exponentialNewValue, props.min, props.max, props.exponentCurve);
   newValue = Math.round(newValue / props.step) * props.step;
 
-  localValue.value = newValue;
-  emit("newValue", newValue);
+  updateValue(newValue);
   
 }
 
@@ -109,6 +108,24 @@ function stopDrag() {
   window.removeEventListener("mousemove", drag);
   window.removeEventListener("mouseup", stopDrag);
   emit("knobReleased")
+}
+
+function scrollWheel(event: WheelEvent) {
+  // Ignore horizontal scrolling
+  if (event.deltaX !== 0) return;
+
+  // Prevent document scrolling
+  event.preventDefault();
+
+  let newVal = event.deltaY < 0 ? localValue.value + props.step : localValue.value - props.step;
+  newVal = Math.max(props.min, Math.min(props.max, newVal));
+
+  updateValue(newVal);
+}
+
+function updateValue(newValue: number) {
+  localValue.value = newValue;
+  emit("newValue", newValue);
 }
 
 watchEffect(() => {
@@ -136,6 +153,7 @@ onUnmounted(() => {
           :class="$style.knob"
           :style="{ width: `${knobSize}px`, height: `${knobSize}px` }"
           @mousedown.prevent="startDrag"
+          @wheel="scrollWheel"
         >
           <div
             :class="$style.indicator"
