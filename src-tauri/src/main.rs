@@ -56,7 +56,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             pipewire::controller::get_pipewire_active_profile,
             pipewire::controller::set_pipewire_profile,
             pipewire::controller::get_pipewire_profiles,
-            pipewire::controller::set_buffer_size,
+            pipewire::controller::get_clock_quantum,
+            pipewire::controller::set_clock_quantum,
             storage::controller::save_channel_config,
             storage::controller::load_channel_config,
             storage::controller::load_all_channels

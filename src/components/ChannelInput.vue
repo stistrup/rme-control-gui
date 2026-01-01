@@ -10,6 +10,7 @@ import { AlsaInput, OutputType } from "../types/config.types";
 import { alsaToDB } from "../utils/alsaValConversion";
 import { formatRoutingControlName } from "../utils/bbfproControlName";
 import linkIcon from '../assets/images/link.png';
+import unlinkIcon from '../assets/images/unlink.png';
 
 interface ChannelProps {
   leftInput: AlsaInput;
@@ -94,12 +95,13 @@ onMounted(async () => {
     <ChannelInputLabel :input="leftInput"/>
     <div :class="$style.controlsContainer">
       <div :class="$style.stereoButtonContainer">
-        <button 
+        <button
           v-if="canBeStereoCoupled"
           :class="$style.stereoButton"
           @click="toggleStereoCouple"
         >
-          <img :class="$style.linkIcon" :src="linkIcon"/>
+          <span v-if="leftInput.stereoCoupled">←</span>
+          <img :class="$style.linkIcon" :src="leftInput.stereoCoupled ? unlinkIcon : linkIcon"/>
           <span>→</span>
         </button>
       </div>
@@ -161,11 +163,14 @@ onMounted(async () => {
 }
 
 .stereoButton {
-  padding: 3px 6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 4px;
   border: none;
   font-size: 12px;
   cursor: pointer;
-  border-radius: var(--border-radius);
+  border-radius: 4px;
   transition: all 0.3s ease;
   background: none;
   --button-bg-color: #4d4d4d;
@@ -173,13 +178,20 @@ onMounted(async () => {
 
   &:hover {
     background-color: var(--button-bg-color);
-    color: var(--button-text-color)
+    color: var(--button-text-color);
+    border-radius: 4px;
+  }
+
+  &:hover .linkIcon {
+    filter: invert(1) opacity(1);
   }
 }
 
 .linkIcon {
   height: 15px;
   filter: opacity(0.7);
+  transition: filter 0.3s ease;
+  display: block;
 }
 
 .rightControls {

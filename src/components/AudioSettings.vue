@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useRmeStore } from "../stores/rmeStore";
-import { inject, ref, watch } from "vue";
+import { inject, ref, watch, onMounted } from "vue";
 import { RmeService } from "../services/RmeService";
 import { audioProfilesConfig } from "../config/soundCardConfig";
 
 const rmeStore = useRmeStore();
 const rmeService = inject<RmeService>("RmeService");
-const selectedBufferSize = ref(256); // Default value
+const selectedClockQuantum = ref(256); // Default value
 const selectedAudioProfile = ref<string>(); // Default value
 const audioProfiles = ref(audioProfilesConfig)
 
@@ -14,21 +14,28 @@ if (!rmeService) {
   throw new Error("Could not load rme plugin");
 }
 
-const bufferSizes = [32, 64, 128, 256, 512, 1024, 2048];
+const clockQuantumSizes = [32, 64, 128, 256, 512, 1024, 2048];
 
 const setAudioProfile = () => {
   if (!selectedAudioProfile.value) return
   rmeService.setActiveProfile(selectedAudioProfile.value)
 };
 
-const setBufferSize = () => {
-  console.log(selectedBufferSize.value)
-  rmeService.setBufferSize(selectedBufferSize.value);
+const setClockQuantum = () => {
+  console.log(selectedClockQuantum.value)
+  rmeService.setClockQuantum(selectedClockQuantum.value);
 };
 
 watch(() => rmeStore.activeProfile, () => {
   selectedAudioProfile.value = rmeStore.activeProfile?.profileName
 }, {immediate: true})
+
+onMounted(async () => {
+  const currentQuantum = await rmeService.getClockQuantum();
+  if (currentQuantum !== null) {
+    selectedClockQuantum.value = currentQuantum;
+  }
+});
 
 </script>
 
@@ -50,15 +57,15 @@ watch(() => rmeStore.activeProfile, () => {
       </select>
     </div>
     <div :class="$style.controlGroup">
-      <label for="bufferSize" :class="$style.label">Buffer Size: </label>
+      <label for="clockQuantum" :class="$style.label">Buffer Size: </label>
       <select
-        id="bufferSize"
-        v-model="selectedBufferSize"
+        id="clockQuantum"
+        v-model="selectedClockQuantum"
         :class="$style.select"
-        @change="setBufferSize"
+        @change="setClockQuantum"
       >
-        <option v-for="bufferSize in bufferSizes" :key="bufferSize" :value="bufferSize">
-          {{ bufferSize }}
+        <option v-for="quantum in clockQuantumSizes" :key="quantum" :value="quantum">
+          {{ quantum }}
         </option>
       </select>
     </div>
