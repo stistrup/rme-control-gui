@@ -1,6 +1,6 @@
 [package]
 name = "rme-babyface-control"
-version = "1.1.0"
+version = "1.1.2"
 description = "RME Babyface Gui"
 authors = ["Stefan Stistrup"]
 edition = "2021"

@@ -2906,7 +2906,7 @@ dependencies = [
 
 [[package]]
 name = "rme-babyface-control"
-version = "1.1.0"
+version = "1.1.2"
 dependencies = [
  "lazy_static",
  "nix 0.29.0",
