@@ -32,11 +32,17 @@ const rmeStore = useRmeStore();
   height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: space-between;
 }
+
+.header {
+  width: 100%;
+  text-align: center;
+}
+
 .controlsContainer {
   display: flex;
+  margin: 0 auto;
 }
 
 .footer {
