@@ -2,8 +2,13 @@ use tauri::State;
 use super::{buffer_size, profile};
 
 #[tauri::command]
-pub fn set_buffer_size(_state: State<'_, super::super::AppState>, buffer_size: u32) -> Result<(), String> {
-    buffer_size::set_buffer_size(buffer_size)
+pub fn get_clock_quantum(_state: State<'_, super::super::AppState>) -> Result<u32, String> {
+    buffer_size::get_clock_quantum()
+}
+
+#[tauri::command]
+pub fn set_clock_quantum(_state: State<'_, super::super::AppState>, quantum: u32) -> Result<(), String> {
+    buffer_size::set_clock_quantum(quantum)
 }
 
 #[tauri::command]

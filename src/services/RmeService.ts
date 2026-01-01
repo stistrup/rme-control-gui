@@ -174,24 +174,35 @@ export class RmeService {
     }
   }
 
-  public setBufferSize = async (bufferSize: number) => {
+  public getClockQuantum = async () => {
+    try {
+      const quantum = await invoke("get_clock_quantum") as number;
+      console.log("Current clock quantum:", quantum);
+      return quantum;
+    } catch (error) {
+      console.error("Failed to get clock quantum:", error);
+      return null;
+    }
+  };
+
+  public setClockQuantum = async (quantum: number) => {
     if (
-      bufferSize < 32 ||
-      bufferSize > 2048 ||
-      (bufferSize & (bufferSize - 1)) != 0
+      quantum < 32 ||
+      quantum > 2048 ||
+      (quantum & (quantum - 1)) != 0
     ) {
       console.error(
-        "The buffer size must be a power of two between 32 and 8192"
+        "The clock quantum must be a power of two between 32 and 2048"
       );
       return;
     }
 
     try {
-      await invoke("set_buffer_size", {
-        bufferSize,
+      await invoke("set_clock_quantum", {
+        quantum,
       });
     } catch (error) {
-      console.error("Failed to get pipewire profiles:", error);
+      console.error("Failed to set clock quantum:", error);
       throw error;
     }
   };
