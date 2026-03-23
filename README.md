@@ -2,7 +2,7 @@
 
 ## NOTE: I'm no longer using this myself as i opted for a quickshell widget on a taskbar. Although i'll try to keep libraries up to date somewhat. If you still have a request/issue/PR i will probably add it if it makes sense. 
 
-A graphical interface interfacing with ALSA and Pipewire to give easy control to RME soundcard Babyface Pro
+A graphical interface interfacing with ALSA and Pipewire to give easy control to RME soundcard Babyface Pro. I also did a CLI tool for it that can be found [here](https://github.com/stistrup/rme-control-cli)
 
 A fun little project to learn tauri and some rust. It's made to work on my mashine and my setup. The "buffer size" is just pipewires clock.force-quantum, and havn't yet tried if the app crashes without pipewire. Or how it handles running jack as main audio server etc. If you try it and can't get it to work, feel free to post issues and maybe i can fix it. 
 
